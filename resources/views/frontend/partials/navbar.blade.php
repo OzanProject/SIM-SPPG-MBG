@@ -96,7 +96,13 @@
             {{-- Auth Buttons (desktop) --}}
             <div class="hidden md:flex items-center gap-2">
                 @auth
-                    <a href="{{ url('/super-admin/dashboard') }}"
+                    @php
+                        $user = auth()->user();
+                        $dashUrl = $user->tenant_id 
+                            ? url("/{$user->tenant_id}/dashboard") 
+                            : url('/super-admin/dashboard');
+                    @endphp
+                    <a href="{{ $dashUrl }}"
                        class="px-5 py-2.5 text-sm font-bold text-white border border-white/10
                               rounded-xl hover:bg-white/10 hover:border-white/20
                               transition-all duration-300 flex items-center gap-2">
@@ -187,7 +193,13 @@
     {{-- Auth CTAs --}}
     <div class="flex flex-col gap-3 px-6">
         @auth
-            <a href="{{ url('/super-admin/dashboard') }}"
+            @php
+                $user = auth()->user();
+                $dashUrl = $user->tenant_id 
+                    ? url("/{$user->tenant_id}/dashboard") 
+                    : url('/super-admin/dashboard');
+            @endphp
+            <a href="{{ $dashUrl }}"
                class="w-full py-5 text-center font-black text-lg primary-gradient
                       text-white rounded-2xl shadow-2xl shadow-indigo-600/30
                       flex items-center justify-center gap-3 hover:scale-[1.02] transition-all">

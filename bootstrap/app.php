@@ -24,8 +24,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SecureHeaders::class,
         ]);
 
-        // Guest users redirect ke halaman utama
+        // Guest users redirect ke dashboard yang sesuai (bukan cuma '/')
         $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
+            if ($user = $request->user()) {
+                return $user->tenant_id 
+                    ? "/{$user->tenant_id}/dashboard" 
+                    : '/super-admin/dashboard';
+            }
             return '/';
         });
 

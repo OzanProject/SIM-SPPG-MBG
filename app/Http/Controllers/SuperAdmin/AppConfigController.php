@@ -33,8 +33,7 @@ class AppConfigController extends Controller
         }
 
         foreach ($data as $key => $value) {
-            AppConfig::where('key', $key)->update(['value' => $value ?? '']);
-            Cache::forget("app_config_{$key}");
+            AppConfig::set($key, $value);
         }
 
         // Clear all app config cache
