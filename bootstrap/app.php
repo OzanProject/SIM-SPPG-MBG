@@ -27,12 +27,19 @@ return Application::configure(basePath: dirname(__DIR__))
         // Guest users redirect ke dashboard yang sesuai (bukan cuma '/')
         $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
             if ($user = $request->user()) {
+                // Jangan paksa ke dashboard jika user sedang di alur payment/pending
+                if (str_contains($request->url(), 'payment/pending')) {
+                    return null;
+                }
+                
                 return $user->tenant_id 
                     ? "/{$user->tenant_id}/dashboard" 
                     : '/super-admin/dashboard';
             }
             return '/';
         });
+
+        $middleware->trustProxies(at: '*');
 
         /**
          * MIDDLEWARE PRIORITY - Urutan eksekusi yang benar:
