@@ -63,7 +63,7 @@ class AppServiceProvider extends ServiceProvider
                 }
 
                 if (Schema::hasTable('app_configs')) {
-                    $appConfigs = \App\Models\AppConfig::pluck('value', 'key')->toArray();
+                    $appConfigs = AppConfig::pluck('value', 'key')->toArray();
                     $view->with('appConfigs', $appConfigs);
                 } else {
                     $view->with('appConfigs', []);
