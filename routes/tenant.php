@@ -13,23 +13,23 @@ use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 
 Route::prefix('/{tenant}')->where(['tenant' => '^(?!login|logout|super-admin|api|up|register|password)[^/]+$'])->middleware([
     'tenant.init',
-    'tenant.user_scope',
 ])->group(function () {
     Route::get('/', function () {
         return redirect()->route('login');
     });
 
-    // ── Halaman Pembayaran Pending (Akses setelah Registrasi, tidak perlu auth ketat) ──
-    Route::prefix('payment')->name('tenant.payment.')->middleware('auth')->group(function () {
+    // ── Halaman Pembayaran Pending ──
+    Route::prefix('payment')->name('tenant.payment.')->middleware(['auth', 'tenant.user_scope'])->group(function () {
         Route::get('/pending', [\App\Http\Controllers\Auth\PaymentPendingController::class, 'show'])
             ->name('pending');
         Route::post('/upload-proof', [\App\Http\Controllers\Auth\PaymentPendingController::class, 'uploadProof'])
             ->name('upload-proof');
     });
 
-    Route::get('/dashboard', [\App\Http\Controllers\Tenant\DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Tenant\DashboardController::class, 'index'])->middleware(['auth', 'tenant.user_scope'])->name('dashboard');
 
-    Route::middleware('auth')->group(function () {
+    Route::middleware(['auth', 'tenant.user_scope'])->group(function () {
+
         // Rute Billing & Langganan (Bebas Akses meski Kadaluarsa)
         Route::prefix('billing')->name('tenant.billing.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Tenant\BillingController::class, 'index'])->name('index');

@@ -16,12 +16,13 @@ class EnsureUserBelongsToTenant
     public function handle(Request $request, Closure $next): Response
     {
         $tenantId = (string) tenant('id');
-        $userTenantId = auth()->check() ? (string) auth()->user()->tenant_id : null;
+        $isLoggedIn = \Illuminate\Support\Facades\Auth::check();
+        $userTenantId = $isLoggedIn ? (string) auth()->user()->tenant_id : 'GUEST';
 
-        // DEBUG LOGGING UNTUK HOSTING
-        if (auth()->check() && $tenantId) {
-            \Illuminate\Support\Facades\Log::debug("TENANT_SCOPE | User: {$userTenantId} | URL_Tenant: {$tenantId} | Match: " . ($userTenantId === $tenantId ? 'YES' : 'NO'));
-            
+        // LOGGING INFORMASI UNTUK SEMUA REQUEST KE TENANT PATH
+        \Illuminate\Support\Facades\Log::info("TENANT_SCOPE | Path: " . $request->path() . " | User: {$userTenantId} | URL_Tenant: {$tenantId}");
+
+        if ($isLoggedIn && $tenantId) {
             // Perbaiki perbandingan agar lebih aman dengan casting ke string
             if ($userTenantId !== $tenantId) {
                 // Berikan akses jika super-admin
@@ -31,13 +32,15 @@ class EnsureUserBelongsToTenant
 
                 // Redirect ke tenant dia yang benar hanya jika URL saat ini tidak cocok
                 $targetDashboard = "/" . $userTenantId . "/dashboard";
-                if ($userTenantId && !$request->is($userTenantId . '*')) {
+                if ($userTenantId && $userTenantId !== 'GUEST' && !$request->is($userTenantId . '*')) {
+                    \Illuminate\Support\Facades\Log::warning("TENANT_SCOPE | Redirecting to correct tenant dashboard: {$targetDashboard}");
                     \Illuminate\Support\Facades\Session::save();
                     return redirect()->to($targetDashboard);
                 }
 
                 // Jika sudah di URL yang "mendekati" itu tapi tetap tidak cocok, logout untuk stop loop
                 if (!$request->routeIs('login')) {
+                    \Illuminate\Support\Facades\Log::error("TENANT_SCOPE | Potential Redirect Loop or Access Denied | User: {$userTenantId} | Path: " . $request->path());
                     \Illuminate\Support\Facades\Auth::logout();
                     \Illuminate\Support\Facades\Session::save();
                     return redirect()->route('login')->with('error', 'Akses ditolak. Konteks tenant tidak valid.');
@@ -47,4 +50,5 @@ class EnsureUserBelongsToTenant
 
         return $next($request);
     }
+
 }
