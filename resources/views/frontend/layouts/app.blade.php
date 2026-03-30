@@ -146,6 +146,25 @@
         ::-webkit-scrollbar-thumb:hover { background: #334155; }
         
         section { scroll-margin-top: 100px; }
+
+        /* Prevent Material Symbols from showing as raw text during load (FOUT) */
+        .material-symbols-outlined {
+            font-display: block;
+            white-space: nowrap;
+            word-wrap: normal;
+            direction: ltr;
+            -webkit-font-feature-settings: 'liga';
+            -webkit-font-smoothing: antialiased;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            /* Hide text until font is loaded or fallback to empty */
+            overflow: hidden;
+            width: 1em;
+            height: 1em;
+        }
     </style>
 </head>
 <body class="mesh-gradient min-h-screen text-slate-300 selection:bg-indigo-500/30 selection:text-indigo-200 antialiased overflow-x-hidden">

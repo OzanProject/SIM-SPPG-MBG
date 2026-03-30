@@ -60,7 +60,7 @@
                             {{-- Visual mock widget --}}
                             <div class="w-full md:w-64 glass p-6 rounded-3xl border-white/5 shadow-2xl shrink-0">
                                 <div class="flex justify-between items-center mb-6">
-                                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Ayam Fillet</span>
+                                    <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Contoh Produk</span>
                                     <span class="px-2 py-1 bg-red-500/20 text-red-400 text-[8px] font-bold rounded-lg uppercase tracking-widest">Kritis</span>
                                 </div>
                                 <div class="space-y-4">
