@@ -20,14 +20,14 @@ class EnsureUserBelongsToTenant
             
             // Jika tenant_id di User tidak sama dengan tenant yang diakses
             if (auth()->user()->tenant_id !== tenant('id')) {
-                // Jangan logout, cukup arahkan ke dapor dia yang benar
+                // Berikan akses jika super-admin
+                if (auth()->user()->role === 'super-admin') {
+                    return $next($request);
+                }
+
+                // Redirect ke dapor dia yang benar agar tidak loop logout
                 if (auth()->user()->tenant_id) {
                     return redirect()->to("/" . auth()->user()->tenant_id . "/dashboard");
-                }
-                
-                // Jika dia super admin, biarkan lewat atau arahkan ke super-admin
-                if (auth()->user()->role === 'super-admin') {
-                    return redirect()->to('/super-admin/dashboard');
                 }
 
                 \Illuminate\Support\Facades\Auth::logout();

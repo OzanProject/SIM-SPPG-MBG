@@ -27,7 +27,7 @@ Route::prefix('/{tenant}')->where(['tenant' => '^(?!login|logout|super-admin|api
             ->name('upload-proof');
     });
 
-    Route::get('/dashboard', [\App\Http\Controllers\Tenant\DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Tenant\DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
     Route::middleware('auth')->group(function () {
         // Rute Billing & Langganan (Bebas Akses meski Kadaluarsa)

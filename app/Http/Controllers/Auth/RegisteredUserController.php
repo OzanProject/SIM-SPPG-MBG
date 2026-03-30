@@ -183,6 +183,8 @@ class RegisteredUserController extends Controller
         }
 
         // Paket Berbayar: Arahkan ke Halaman Pembayaran Khusus
+        session()->save();
+
         return redirect("/{$tenant->id}/payment/pending")
             ->with('info', '🎉 Akun berhasil dibuat! Selesaikan pembayaran untuk mengaktifkan paket Anda.');
     }
