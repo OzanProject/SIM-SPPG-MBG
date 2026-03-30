@@ -15,26 +15,33 @@ class EnsureUserBelongsToTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // 1. Jika user login dan konteks tenant aktif
-        if (auth()->check() && tenant('id')) {
+        $tenantId = (string) tenant('id');
+        $userTenantId = auth()->check() ? (string) auth()->user()->tenant_id : null;
+
+        // DEBUG LOGGING UNTUK HOSTING
+        if (auth()->check() && $tenantId) {
+            \Illuminate\Support\Facades\Log::debug("TENANT_SCOPE | User: {$userTenantId} | URL_Tenant: {$tenantId} | Match: " . ($userTenantId === $tenantId ? 'YES' : 'NO'));
             
-            // Jika tenant_id di User tidak sama dengan tenant yang sedang diakses
-            if (auth()->user()->tenant_id !== tenant('id')) {
+            // Perbaiki perbandingan agar lebih aman dengan casting ke string
+            if ($userTenantId !== $tenantId) {
                 // Berikan akses jika super-admin
                 if (auth()->user()->role === 'super-admin') {
                     return $next($request);
                 }
 
-                // Redirect ke tenant dia yang benar
-                if (auth()->user()->tenant_id) {
+                // Redirect ke tenant dia yang benar hanya jika URL saat ini tidak cocok
+                $targetDashboard = "/" . $userTenantId . "/dashboard";
+                if ($userTenantId && !$request->is($userTenantId . '*')) {
                     \Illuminate\Support\Facades\Session::save();
-                    return redirect()->to("/" . auth()->user()->tenant_id . "/dashboard");
+                    return redirect()->to($targetDashboard);
                 }
 
-                // Jika tidak punya tenant_id, logout untuk keamanan
-                \Illuminate\Support\Facades\Auth::logout();
-                \Illuminate\Support\Facades\Session::save();
-                return redirect()->route('login')->with('error', 'Akses ditolak. Tenant tidak valid.');
+                // Jika sudah di URL yang "mendekati" itu tapi tetap tidak cocok, logout untuk stop loop
+                if (!$request->routeIs('login')) {
+                    \Illuminate\Support\Facades\Auth::logout();
+                    \Illuminate\Support\Facades\Session::save();
+                    return redirect()->route('login')->with('error', 'Akses ditolak. Konteks tenant tidak valid.');
+                }
             }
         }
 

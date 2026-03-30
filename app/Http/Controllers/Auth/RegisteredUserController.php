@@ -180,7 +180,7 @@ class RegisteredUserController extends Controller
         Auth::login($userCentral);
 
         // Paket Gratis: Langsung ke Dashboard
-        if ($plan->price <= 0) {
+        if ($plan->price <= 0 || $plan->price == '0.00' || $plan->price == 0) {
             session()->save(); // Simpan sesi eksplisit untuk hosting
             return redirect("/{$tenant->id}/dashboard")
                 ->with('success', '🎉 Selamat datang! Akun Dapur Anda sudah aktif.');
@@ -191,5 +191,6 @@ class RegisteredUserController extends Controller
 
         return redirect("/{$tenant->id}/payment/pending")
             ->with('info', '🎉 Akun berhasil dibuat! Selesaikan pembayaran untuk mengaktifkan paket Anda.');
+
     }
 }
