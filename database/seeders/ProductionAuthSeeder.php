@@ -67,6 +67,16 @@ class ProductionAuthSeeder extends Seeder
 
         // 4. PROVISION IN TENANT DATABASE
         echo "Ensuring Tenant Database exists and is migrated: $tenantId...\n";
+        
+        // MANUALLY TRIGGER DATABASE CREATION IF IT DOES NOT EXIST
+        // This is a safety measure for CLI/Seeder contexts
+        $manager = $tenant->database()->manager();
+        $dbName  = $tenant->database()->getName();
+        if (!$manager->databaseExists($dbName)) {
+            echo "Creating database: $dbName...\n";
+            $manager->createDatabase($tenant);
+        }
+
         Artisan::call('tenants:migrate', ['--tenants' => [$tenantId], '--force' => true]);
 
         echo "Provisioning Tenant Admin in Tenant DB: $tenantId...\n";
