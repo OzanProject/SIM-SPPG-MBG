@@ -72,6 +72,21 @@ class ProductionAuthSeeder extends Seeder
         // This is a safety measure for CLI/Seeder contexts
         $manager = $tenant->database()->manager();
         $dbName  = $tenant->database()->getName();
+
+        // DEBUG: Verify if config is loaded correctly
+        echo "DEBUG: Connection template: " . config('tenancy.database.template_tenant_connection') . "\n";
+        echo "DEBUG: Prefix: " . config('tenancy.database.prefix') . "\n";
+        echo "DEBUG: DB Name to create: $dbName\n";
+
+        // ENSURE DIRECTORY EXISTS
+        if (str_contains($dbName, 'tenant_dbs')) {
+            $dir = storage_path('tenant_dbs');
+            if (!file_exists($dir)) {
+                echo "Creating directory: $dir...\n";
+                mkdir($dir, 0755, true);
+            }
+        }
+
         if (!$manager->databaseExists($dbName)) {
             echo "Creating database: $dbName...\n";
             $manager->createDatabase($tenant);
