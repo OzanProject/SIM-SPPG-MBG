@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     return "/{$user->tenant_id}/dashboard";
                 }
                 return '/super-admin/dashboard';
+                return $user->tenant_id ? "/{$user->tenant_id}/dashboard" : '/super-admin/dashboard';
             }
             return '/';
         });
