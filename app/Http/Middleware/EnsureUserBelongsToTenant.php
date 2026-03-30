@@ -15,22 +15,23 @@ class EnsureUserBelongsToTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Jika user terautentikasi dan kita sedang dalam konteks tenant
+        // 1. Jika user login, pastikan dia hanya bisa akses dapornya sendiri
         if (auth()->check() && tenant()) {
             
-            // Ambil tenant_id dari sesi
-            // [PRO-GUIDELINE] Simple Session Binding Check
-            if (auth()->user()->tenant_id !== session('tenant_id')) {
-                \Illuminate\Support\Facades\Log::warning("EnsureUserBelongsToTenant: SESSION BINDING FAILED -> LOGOUT", [
-                    'user' => auth()->user()->email,
-                    'user_tenant' => auth()->user()->tenant_id,
-                    'session_tenant' => session('tenant_id')
-                ]);
+            // Jika tenant_id di User tidak sama dengan tenant yang diakses
+            if (auth()->user()->tenant_id !== tenant('id')) {
+                // Jangan logout, cukup arahkan ke dapor dia yang benar
+                if (auth()->user()->tenant_id) {
+                    return redirect()->to("/" . auth()->user()->tenant_id . "/dashboard");
+                }
                 
+                // Jika dia super admin, biarkan lewat atau arahkan ke super-admin
+                if (auth()->user()->role === 'super-admin') {
+                    return redirect()->to('/super-admin/dashboard');
+                }
+
                 \Illuminate\Support\Facades\Auth::logout();
-                $request->session()->invalidate();
-                $loginRoute = tenant() ? 'tenant.login' : 'login';
-                return redirect()->route($loginRoute)->with('error', 'Keamanan: Sesi Anda tidak valid untuk dapur ini. Silakan masuk kembali.');
+                return redirect()->route('login')->with('error', 'Akses ditolak.');
             }
         }
 
