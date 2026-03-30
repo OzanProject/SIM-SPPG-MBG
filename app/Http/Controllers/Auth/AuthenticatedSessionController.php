@@ -60,15 +60,15 @@ class AuthenticatedSessionController extends Controller
             $redirectSlug = $currentTenant ? $currentTenant->id : $user->tenant_id;
             
             \Illuminate\Support\Facades\Log::info("LOGIN_DEBUG | Redirecting to Tenant: {$redirectSlug} | User ID: {$user->id}");
-            \Illuminate\Support\Facades\Session::save(); // Eksplisit simpan sebelum redirect
+            \Illuminate\Support\Facades\Session::save();
             return redirect("/{$redirectSlug}/dashboard");
-
         }
 
         // 5. Redirect Super Admin (Eksplisit)
         \Illuminate\Support\Facades\Session::save();
         \Illuminate\Support\Facades\Log::info("LOGIN_DEBUG | Redirecting to Super Admin | User ID: {$user->id}");
         return redirect('/super-admin/dashboard');
+
 
     }
 
