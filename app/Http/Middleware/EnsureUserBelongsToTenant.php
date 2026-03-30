@@ -29,7 +29,8 @@ class EnsureUserBelongsToTenant
                 
                 \Illuminate\Support\Facades\Auth::logout();
                 $request->session()->invalidate();
-                return redirect()->route('login')->with('error', 'Keamanan: Sesi Anda tidak valid untuk dapur ini. Silakan masuk kembali.');
+                $loginRoute = tenant() ? 'tenant.login' : 'login';
+                return redirect()->route($loginRoute)->with('error', 'Keamanan: Sesi Anda tidak valid untuk dapur ini. Silakan masuk kembali.');
             }
         }
 

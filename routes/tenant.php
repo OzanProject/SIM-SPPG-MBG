@@ -133,5 +133,8 @@ Route::prefix('/{tenant}')->where(['tenant' => '^(?!login|logout|super-admin|api
         }); // End of tenant.subscription middleware
     });
 
-    require base_path('routes/auth.php');
+    // Muat Rute Autentikasi untuk Tenant dengan Name Prefix untuk menghindari duplikasi saat caching
+    Route::name('tenant.')->group(function () {
+        require base_path('routes/auth.php');
+    });
 });

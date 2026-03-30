@@ -23,7 +23,7 @@
         </div>
 
         <div class="glass-card rounded-3xl p-8 md:p-10 border border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-xl bg-white/5">
-            <form action="{{ route('register') }}" method="POST" id="registerForm" enctype="multipart/form-data" class="space-y-8">
+            <form action="{{ tenant() ? route('tenant.register') : route('register') }}" method="POST" id="registerForm" enctype="multipart/form-data" class="space-y-8">
                 @csrf
                 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
