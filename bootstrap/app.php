@@ -11,6 +11,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Wajib untuk Hosting Shared agar protokol HTTPS terbaca benar
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'tenant.subscription' => \App\Http\Middleware\CheckTenantSubscription::class,
             'free_tier.restrict'  => \App\Http\Middleware\RestrictFreeTierActions::class,
@@ -20,12 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.init'         => \App\Http\Middleware\TenantMiddleware::class,
         ]);
 
-        $middleware->appendToGroup('web', [
-            \App\Http\Middleware\SecureHeaders::class,
-        ]);
+        // $middleware->appendToGroup('web', [
+        //     \App\Http\Middleware\SecureHeaders::class,
+        // ]);
 
-        // Wajib untuk Hosting Shared agar protokol HTTPS terbaca benar
-        $middleware->trustProxies(at: '*');
 
         // Guest users redirect ke /login (untuk central) atau /{tenant}/login (untuk tenant)
         $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {

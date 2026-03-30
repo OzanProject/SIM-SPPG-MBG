@@ -15,16 +15,18 @@ class EnsureUserBelongsToTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $tenantId = (string) tenant('id');
-        $isLoggedIn = \Illuminate\Support\Facades\Auth::check();
-        $userTenantId = $isLoggedIn ? (string) auth()->user()->tenant_id : 'GUEST';
+        $tenantIdFromURL = (string) tenant('id');
+        $userStatus = auth()->check() ? 'LOGGED_IN' : 'GUEST';
+        $userTenantId = auth()->check() ? (string) auth()->user()->tenant_id : 'N/A';
 
-        // LOGGING INFORMASI UNTUK SEMUA REQUEST KE TENANT PATH
-        \Illuminate\Support\Facades\Log::info("TENANT_SCOPE | Path: " . $request->path() . " | User: {$userTenantId} | URL_Tenant: {$tenantId}");
+        // RAW LOG UNTUK DEBUGGING REDIRECT LOOP
+        \Illuminate\Support\Facades\Log::info("TENANT_SCOPE_ENTRY | Path: " . $request->path() . " | Status: {$userStatus} | User_Tenant: {$userTenantId} | URL_Tenant: {$tenantIdFromURL}");
 
-        if ($isLoggedIn && $tenantId) {
+        if (auth()->check() && $tenantIdFromURL) {
+
             // Perbaiki perbandingan agar lebih aman dengan casting ke string
-            if ($userTenantId !== $tenantId) {
+            if ($userTenantId !== $tenantIdFromURL) {
+
                 // Berikan akses jika super-admin
                 if (auth()->user()->role === 'super-admin') {
                     return $next($request);

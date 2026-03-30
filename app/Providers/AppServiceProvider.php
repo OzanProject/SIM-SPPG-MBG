@@ -23,9 +23,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Paksa HTTPS di lingkungan produksi/hosting
-        if (app()->environment('production') || config('app.url') !== 'http://localhost') {
+        if (!app()->isLocal() || config('app.url') !== 'http://localhost') {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
+
 
         // Bagikan konfigurasi aplikasi ke semua view secara global
         // Guard: pastikan tabel app_configs sudah ada sebelum query
