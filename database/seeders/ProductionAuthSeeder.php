@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 use App\Models\User;
 use App\Models\Tenant;
 use Illuminate\Support\Facades\Hash;
@@ -65,6 +66,9 @@ class ProductionAuthSeeder extends Seeder
         );
 
         // 4. PROVISION IN TENANT DATABASE
+        echo "Ensuring Tenant Database exists and is migrated: $tenantId...\n";
+        Artisan::call('tenants:migrate', ['--tenants' => [$tenantId], '--force' => true]);
+
         echo "Provisioning Tenant Admin in Tenant DB: $tenantId...\n";
         tenancy()->initialize($tenant);
         
