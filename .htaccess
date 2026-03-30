@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# Block access to hidden files and directories (like .env, .git)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# Prevent viewing of web.config or others
+<FilesMatch "(?i)(\.(bak|conf|dist|fla|in[ci]|log|psd|sh|sql|sw[op]|env.*)|~)$">
+    Require all denied
+</FilesMatch>
