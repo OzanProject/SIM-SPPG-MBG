@@ -113,14 +113,17 @@
 
                             <div class="h-px bg-white/5 my-6"></div>
 
-                            {{-- Detailed Feature Flags --}}
+                            {{-- Detailed Feature Flags (Synced with Super Admin) --}}
                             @php
                                 $mainFeatures = [
-                                    ['flag' => $plan->has_sales,           'label' => 'Kasir & POS',          'icon' => 'shopping_cart'],
-                                    ['flag' => $plan->has_inventory,       'label' => 'Manajemen Stok',       'icon' => 'inventory_2'],
-                                    ['flag' => $plan->has_accounting_full, 'label' => 'Accounting Pro',       'icon' => 'account_balance_wallet'],
-                                    ['flag' => $plan->has_hr,               'label' => 'SDM & Payroll',        'icon' => 'groups'],
-                                    ['flag' => $plan->has_budgeting,       'label' => 'Budgeting',             'icon' => 'monetization_on'],
+                                    ['flag' => $plan->has_sales,           'label' => 'Penjualan & Kasir',         'icon' => 'shopping_cart'],
+                                    ['flag' => $plan->has_inventory,       'label' => 'Manajemen Stok (Inventory)','icon' => 'inventory_2'],
+                                    ['flag' => $plan->has_procurement,     'label' => 'Pengadaan (PO) / Supplier', 'icon' => 'local_shipping'],
+                                    ['flag' => $plan->has_accounting_full, 'label' => 'Akuntansi Lengkap (Ledger)','icon' => 'account_balance_wallet'],
+                                    ['flag' => $plan->has_budgeting,       'label' => 'Sistem Anggaran (Budgeting)','icon' => 'monetization_on'],
+                                    ['flag' => $plan->has_hr,              'label' => 'HR / Penggajian (Payroll)', 'icon' => 'groups'],
+                                    ['flag' => $plan->has_circle_menu,     'label' => 'Distribusi Menu Circle',    'icon' => 'restaurant_menu'],
+                                    ['flag' => $plan->can_export,          'label' => 'Export Data Excel/PDF',     'icon' => 'download'],
                                 ];
                             @endphp
 
