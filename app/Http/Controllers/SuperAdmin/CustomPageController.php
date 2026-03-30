@@ -30,6 +30,11 @@ class CustomPageController extends Controller
      */
     public function store(Request $request)
     {
+        $request->merge([
+            'is_active' => $request->has('is_active'),
+            'show_in_footer' => $request->has('show_in_footer'),
+        ]);
+
         $validated = $request->validate([
             'title'          => 'required|max:255',
             'slug'           => 'nullable|max:255|unique:custom_pages,slug',
@@ -38,8 +43,9 @@ class CustomPageController extends Controller
             'show_in_footer' => 'boolean',
         ]);
 
-        $validated['is_active'] = $request->has('is_active');
-        $validated['show_in_footer'] = $request->has('show_in_footer');
+        if (empty($validated['slug'])) {
+            $validated['slug'] = \Illuminate\Support\Str::slug($validated['title']);
+        }
 
         CustomPage::create($validated);
 
@@ -59,6 +65,11 @@ class CustomPageController extends Controller
      */
     public function update(Request $request, CustomPage $customPage)
     {
+        $request->merge([
+            'is_active' => $request->has('is_active'),
+            'show_in_footer' => $request->has('show_in_footer'),
+        ]);
+
         $validated = $request->validate([
             'title'          => 'required|max:255',
             'slug'           => 'nullable|max:255|unique:custom_pages,slug,' . $customPage->id,
@@ -66,9 +77,6 @@ class CustomPageController extends Controller
             'is_active'      => 'boolean',
             'show_in_footer' => 'boolean',
         ]);
-
-        $validated['is_active'] = $request->has('is_active');
-        $validated['show_in_footer'] = $request->has('show_in_footer');
 
         $customPage->update($validated);
 
