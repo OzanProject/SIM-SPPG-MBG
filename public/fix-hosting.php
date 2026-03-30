@@ -113,6 +113,7 @@ echo "<h3>4. App Info</h3>";
 echo "<ul>";
 echo "<li>APP_URL: " . config('app.url') . "</li>";
 echo "<li>SESSION_DRIVER: " . config('session.driver') . "</li>";
+echo "<li>SESSION_CONNECTION: " . (config('session.connection') ?: '<span style="color:red;">null (May cause Logout!)</span>') . "</li>";
 echo "<li>SESSION_DOMAIN: " . (config('session.domain') ?: '<i>(null)</i>') . "</li>";
 echo "<li>DB_CONNECTION: " . config('database.default') . "</li>";
 echo "</ul>";
