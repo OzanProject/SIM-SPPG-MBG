@@ -66,6 +66,15 @@ class RegisteredUserController extends Controller
             $id = $baseId . '-' . $counter++;
         }
 
+        // 1.5 Ensure Physical SQLite File exists before creation (Pre-initialization fix for hosting)
+        $dbPath = storage_path("tenant_dbs/{$id}.sqlite");
+        if (!file_exists(dirname($dbPath))) {
+            mkdir(dirname($dbPath), 0775, true);
+        }
+        if (!file_exists($dbPath)) {
+            touch($dbPath);
+        }
+
         // 2. Heavy Lifting: Create Tenant & Domain FIRST (Outside Transaction to avoid lock timeouts during migrations)
         // This triggers database creation and migrations in Stancl Tenancy.
         $tenant = Tenant::create([

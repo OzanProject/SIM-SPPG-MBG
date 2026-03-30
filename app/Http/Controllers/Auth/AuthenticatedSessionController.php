@@ -54,16 +54,18 @@ class AuthenticatedSessionController extends Controller
         // 4. Set Session Tenant untuk Session Binding Middleware
         if ($user->tenant_id) {
             session(['tenant_id' => $user->tenant_id]);
+            \Illuminate\Support\Facades\Session::save(); // Force save session before redirect
             
             // Gunakan slug aktif (sppg-cek) jika sedang dalam konteks tenant, agar URL tidak berubah
             $redirectSlug = $currentTenant ? $currentTenant->id : $user->tenant_id;
             
-            \Illuminate\Support\Facades\Log::info("LOGIN_DEBUG | Redirecting to Tenant: {$redirectSlug}");
+            \Illuminate\Support\Facades\Log::info("LOGIN_DEBUG | Redirecting to Tenant: {$redirectSlug} | User ID: {$user->id}");
             return redirect("/{$redirectSlug}/dashboard");
         }
 
         // 5. Redirect Super Admin (Eksplisit)
-        \Illuminate\Support\Facades\Log::info("LOGIN_DEBUG | Redirecting to Super Admin");
+        \Illuminate\Support\Facades\Session::save();
+        \Illuminate\Support\Facades\Log::info("LOGIN_DEBUG | Redirecting to Super Admin | User ID: {$user->id}");
         return redirect('/super-admin/dashboard');
     }
 
