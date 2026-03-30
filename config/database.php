@@ -134,6 +134,15 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
+        // Koneksi Template untuk Multi-Tenant (Shared Hosting Fix)
+        'tenant_template' => [
+            'driver' => 'sqlite',
+            'url' => env('DB_URL'),
+            'database' => null, // Akan diisi dinamis oleh tenancy
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+        ],
+
     ],
 
     /*
