@@ -15,23 +15,26 @@ class EnsureUserBelongsToTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // 1. Jika user login, pastikan dia hanya bisa akses dapornya sendiri
-        if (auth()->check() && tenant()) {
+        // 1. Jika user login dan konteks tenant aktif
+        if (auth()->check() && tenant('id')) {
             
-            // Jika tenant_id di User tidak sama dengan tenant yang diakses
+            // Jika tenant_id di User tidak sama dengan tenant yang sedang diakses
             if (auth()->user()->tenant_id !== tenant('id')) {
                 // Berikan akses jika super-admin
                 if (auth()->user()->role === 'super-admin') {
                     return $next($request);
                 }
 
-                // Redirect ke dapor dia yang benar agar tidak loop logout
+                // Redirect ke tenant dia yang benar
                 if (auth()->user()->tenant_id) {
+                    \Illuminate\Support\Facades\Session::save();
                     return redirect()->to("/" . auth()->user()->tenant_id . "/dashboard");
                 }
 
+                // Jika tidak punya tenant_id, logout untuk keamanan
                 \Illuminate\Support\Facades\Auth::logout();
-                return redirect()->route('login')->with('error', 'Akses ditolak.');
+                \Illuminate\Support\Facades\Session::save();
+                return redirect()->route('login')->with('error', 'Akses ditolak. Tenant tidak valid.');
             }
         }
 

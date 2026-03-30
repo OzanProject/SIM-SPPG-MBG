@@ -68,9 +68,12 @@ class RegisteredUserController extends Controller
 
         // 1.5 Ensure Directory exists before creation (Pre-initialization fix for hosting)
         $dbPath = storage_path("tenant_dbs/{$id}.sqlite");
-        if (!file_exists(dirname($dbPath))) {
-            mkdir(dirname($dbPath), 0775, true);
+        $dbDir = dirname($dbPath);
+        if (!file_exists($dbDir)) {
+            // Gunakan 0755 untuk kompatibilitas lebih baik di shared hosting
+            mkdir($dbDir, 0755, true);
         }
+
 
         // 2. Heavy Lifting: Create Tenant & Domain FIRST (Outside Transaction to avoid lock timeouts during migrations)
         // This triggers database creation and migrations in Stancl Tenancy.
@@ -178,12 +181,13 @@ class RegisteredUserController extends Controller
 
         // Paket Gratis: Langsung ke Dashboard
         if ($plan->price <= 0) {
+            session()->save(); // Simpan sesi eksplisit untuk hosting
             return redirect("/{$tenant->id}/dashboard")
                 ->with('success', '🎉 Selamat datang! Akun Dapur Anda sudah aktif.');
         }
 
         // Paket Berbayar: Arahkan ke Halaman Pembayaran Khusus
-        session()->save();
+        session()->save(); // PENTING: Simpan sesi eksplisit untuk hosting agar login tidak hilang
 
         return redirect("/{$tenant->id}/payment/pending")
             ->with('info', '🎉 Akun berhasil dibuat! Selesaikan pembayaran untuk mengaktifkan paket Anda.');

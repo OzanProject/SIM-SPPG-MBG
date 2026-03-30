@@ -24,21 +24,22 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SecureHeaders::class,
         ]);
 
+        // Wajib untuk Hosting Shared agar protokol HTTPS terbaca benar
+        $middleware->trustProxies(at: '*');
+        
         // Guest users redirect ke /login (untuk central) atau /{tenant}/login (untuk tenant)
         $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
             if ($user = $request->user()) {
-                // Sangat sederhana: kembalikan ke dapor masing-masing
                 if ($user->tenant_id) {
+                    \Illuminate\Support\Facades\Session::save();
                     return "/{$user->tenant_id}/dashboard";
                 }
+                \Illuminate\Support\Facades\Session::save();
                 return '/super-admin/dashboard';
-                return $user->tenant_id ? "/{$user->tenant_id}/dashboard" : '/super-admin/dashboard';
             }
             return '/';
         });
 
-        // Wajib untuk Hosting Shared agar protokol HTTPS terbaca benar
-        $middleware->trustProxies(at: '*');
 
         /**
          * MIDDLEWARE PRIORITY - Urutan eksekusi yang benar:
