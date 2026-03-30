@@ -25,7 +25,7 @@
         <x-auth-session-status class="mb-4 text-emerald-400 font-bold text-sm text-center bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3" :status="session('status')" />
 
         <div class="glass-card rounded-3xl p-8 border border-white/10 shadow-2xl relative overflow-hidden backdrop-blur-xl bg-white/5">
-            <form id="forgotForm" method="POST" action="{{ route('password.email') }}" class="space-y-6">
+            <form id="forgotForm" method="POST" action="{{ tenant() ? route('tenant.password.email') : route('password.email') }}" class="space-y-6">
                 @csrf
                 
                 <div>

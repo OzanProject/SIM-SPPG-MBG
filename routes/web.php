@@ -17,7 +17,7 @@ use App\Http\Controllers\SuperAdmin\ProfileController as SuperAdminProfileContro
 $centralDomains = config('tenancy.central_domains');
 $domainPattern = implode('|', array_map(fn($d) => preg_quote($d, '#'), $centralDomains));
 
-Route::domain('{central_domain}')->where('central_domain', $domainPattern)->group(function () {
+Route::domain('{central_domain}')->where(['central_domain' => $domainPattern])->group(function () {
     Route::get('/{section?}', [\App\Http\Controllers\LandingController::class, 'index'])
         ->name('welcome')
         ->where('section', 'features|pricing|how-it-works|testimonials|faq');
