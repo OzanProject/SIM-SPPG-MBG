@@ -12,6 +12,7 @@ use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 */
 
 Route::prefix('/{tenant}')->where(['tenant' => '^(?!login|logout|super-admin|api|up|register|password)[^/]+$'])->middleware([
+    'web',
     'tenant.init',
 ])->group(function () {
     Route::get('/', function () {
