@@ -61,12 +61,24 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->priority([
             \Illuminate\Session\Middleware\StartSession::class,
+            function ($request, $next) {
+                $status = auth()->check() ? 'LOGGED_IN' : 'GUEST';
+                \Illuminate\Support\Facades\Log::info("DIAG_AUTH_START | Path: " . $request->path() . " | Status: {$status}");
+                return $next($request);
+            },
             \App\Http\Middleware\TenantMiddleware::class,
+            function ($request, $next) {
+                $status = auth()->check() ? 'LOGGED_IN' : 'GUEST';
+                \Illuminate\Support\Facades\Log::info("DIAG_AUTH_AFTER_TENANT | Path: " . $request->path() . " | Status: {$status}");
+                return $next($request);
+            },
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \Illuminate\Auth\Middleware\Authenticate::class,
-            \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            \App\Http\Middleware\EnsureUserBelongsToTenant::class,
             \Illuminate\Session\Middleware\AuthenticateSession::class,
+            \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            \Illuminate\Routing\Middleware\ValidateSignature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
