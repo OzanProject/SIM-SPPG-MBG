@@ -28,14 +28,16 @@ class AppServiceProvider extends ServiceProvider
             config(['app.url' => rtrim($appUrl, '/')]);
         }
 
-        // PAKSA SESSION untuk selalu menggunakan koneksi 'central' (Database Pusat)
-        // Ini VITAL agar sesi tidak hilang saat database berpindah ke tenant
+        // 1. KUNCI Nama Database Central secara eksplisit (Pencegahan Kontaminasi Tenancy)
+        config(['database.connections.central.database' => env('DB_DATABASE')]);
+
+        // 2. PAKSA SESSION untuk selalu menggunakan koneksi 'central' (Database Pusat)
         config(['session.connection' => 'central']);
         
-        // Pastikan Auth juga menggunakan provider yang benar-benar stabil
+        // 3. Pastikan Auth provider stabil
         config(['auth.providers.users.model' => \App\Models\User::class]);
 
-        // Paksa skema HTTPS jika sedang diakses via secure protocol (Sesuai cPanel/LiteSpeed)
+        // 4. Paksa skema HTTPS jika sedang diakses via secure protocol
         $isSecure = request()->secure() || 
                     (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
                     str_starts_with(config('app.url', ''), 'https://');
@@ -73,7 +75,7 @@ class AppServiceProvider extends ServiceProvider
                 if (Schema::hasTable('landing_settings')) {
                     $landingSettings = \App\Models\LandingSetting::all()
                         ->groupBy('group')
-                        ->map(fn ($group) => $group->pluck('value', 'key')->toArray())
+                        ->map(fn($group) => $group->pluck('value', 'key')->toArray())
                         ->toArray();
                     $view->with('landingSettings', $landingSettings);
                 } else {
@@ -89,8 +91,8 @@ class AppServiceProvider extends ServiceProvider
 
                 if (Schema::hasTable('custom_pages')) {
                     $customPages = \App\Models\CustomPage::where('is_active', true)
-                                    ->where('show_in_footer', true)
-                                    ->get();
+                        ->where('show_in_footer', true)
+                        ->get();
                     $view->with('customPages', $customPages);
                 } else {
                     $view->with('customPages', collect());
@@ -114,9 +116,9 @@ class AppServiceProvider extends ServiceProvider
                     'mail_from_address' => 'mail.from.address',
                     'mail_from_name' => 'mail.from.name'
                 ];
-                
+
                 $smtpConfigs = \App\Models\LandingSetting::whereIn('key', array_keys($smtpKeys))->get();
-                
+
                 foreach ($smtpConfigs as $config) {
                     if ($config->value) {
                         config([$smtpKeys[$config->key] => $config->value]);
@@ -143,7 +145,8 @@ class AppServiceProvider extends ServiceProvider
                         'ip_address' => request()->ip(),
                         'user_agent' => request()->userAgent(),
                     ]);
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                }
             }
         });
 
@@ -157,7 +160,8 @@ class AppServiceProvider extends ServiceProvider
                         'ip_address' => request()->ip(),
                         'user_agent' => request()->userAgent(),
                     ]);
-                } catch (\Exception $e) {}
+                } catch (\Exception $e) {
+                }
             }
         });
         // DEBUG REDIRECT LOOP: Rekam semua response yang melakukan redirect (301/302)
