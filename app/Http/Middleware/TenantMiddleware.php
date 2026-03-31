@@ -46,12 +46,16 @@ class TenantMiddleware
             tenancy()->initialize($tenant);
         }
 
-        // 4. 🔥 FIX AUTH LOOP: Sinkronisasi Sesi & Auth (Solusi dari Anda)
+        // 4. 🔥 FIX AUTH LOOP: Sinkronisasi Sesi & Auth (Final Sweep)
         // Jika user pindah ke rute tenant, pastikan ID User dipusat tetap terbaca
         if (auth()->check()) {
-            session(['user_id' => auth()->id()]);
-        } elseif (session()->has('user_id')) {
-            // Jika auth hilang karena switch DB, login ulang menggunakan ID dari sesi (Model dipinning ke 'central')
+            session([
+                'user_id'      => auth()->id(),
+                'is_logged_in' => true
+            ]);
+        } elseif (session('is_logged_in') && session()->has('user_id')) {
+            // Restore Auth jika hilang akibat switch DB (Model pinned ke 'central')
+            \Illuminate\Support\Facades\Log::info("AUTH_RESTORE | Restoring user ID: " . session('user_id'));
             \Illuminate\Support\Facades\Auth::loginUsingId(session('user_id'));
         }
 

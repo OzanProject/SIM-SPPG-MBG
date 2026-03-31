@@ -51,7 +51,10 @@ class AuthenticatedSessionController extends Controller
         \Illuminate\Support\Facades\Auth::login($user, $request->boolean('remember'));
         
         // Simpan User ID secara eksplisit untuk Handover Sesi di Middleware Tenant
-        session(['user_id' => $user->id]);
+        session([
+            'user_id'      => $user->id,
+            'is_logged_in' => true,
+        ]);
         
         $request->session()->regenerate();
 
