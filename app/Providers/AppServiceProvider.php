@@ -22,9 +22,27 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Paksa HTTPS di lingkungan produksi/hosting
-        if (!app()->isLocal() || config('app.url') !== 'http://localhost') {
+        // Paksa HTTPS di lingkungan produksi/hosting agar URL generator konsisten
+        if (app()->environment('production') || config('app.force_https', false)) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
+        } elseif (!app()->isLocal() && request()->secure()) {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
+        // Fix Session Domain secara dinamis jika masih 'localhost' atau '127.0.0.1' di hosting
+        $currentHost = request()->getHost();
+        if (!app()->isLocal() && ($currentHost !== 'localhost' && $currentHost !== '127.0.0.1')) {
+            $sessionDomain = config('session.domain');
+            if (!$sessionDomain || $sessionDomain === 'localhost' || $sessionDomain === '127.0.0.1') {
+                // Gunakan host saat ini (tanpa subdomain jika ingin share session across subdomains, 
+                // tapi untuk path-based tenancy cukup gunakan host saat ini)
+                config(['session.domain' => $currentHost]);
+            }
+            
+            // Pastikan secure cookie aktif jika lewat HTTPS
+            if (request()->secure()) {
+                config(['session.secure' => true]);
+            }
         }
 
 
