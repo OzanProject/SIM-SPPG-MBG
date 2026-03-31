@@ -40,18 +40,26 @@ class TenantMiddleware
             abort(404, 'Dapur (Tenant) tidak ditemukan.');
         }
 
-        // 3. Inisialisasi Tenancy agar koneksi DB berpindah ke database tenant
-        // Pastikan tidak melakukan inisialisasi ulang jika sudah aktif untuk tenant yang sama
+        // 3. Inisialisasi Tenancy
         if (!tenancy()->initialized || tenant('id') !== $tenant->id) {
             \Illuminate\Support\Facades\Log::info("TENANT_INIT_SWITCH | Initializing database for: {$tenant->id}");
             tenancy()->initialize($tenant);
         }
 
-        // 4. Set instance & session untuk referensi di controller & middleware lain
+        // 4. 🔥 FIX AUTH LOOP: Sinkronisasi Sesi & Auth (Solusi dari Anda)
+        // Jika user pindah ke rute tenant, pastikan ID User dipusat tetap terbaca
+        if (auth()->check()) {
+            session(['user_id' => auth()->id()]);
+        } elseif (session()->has('user_id')) {
+            // Jika auth hilang karena switch DB, login ulang menggunakan ID dari sesi (Model dipinning ke 'central')
+            auth()->loginUsingId(session('user_id'));
+        }
+
+        // 5. Set instance & session untuk referensi
         app()->instance('currentTenant', $tenant);
         session(['tenant_id' => $tenant->id]);
 
-        // 5. Hapus parameter 'tenant' dari route agar controller tidak perlu tangani manual
+        // 6. Hapus parameter 'tenant'
         $request->route()->forgetParameter('tenant');
 
         return $next($request);

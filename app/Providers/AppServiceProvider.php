@@ -167,14 +167,6 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
         });
-        // DEBUG REDIRECT LOOP: Rekam semua response yang melakukan redirect (301/302)
-        \Illuminate\Support\Facades\Event::listen(\Illuminate\Foundation\Http\Events\RequestHandled::class, function ($event) {
-            $response = $event->response;
-            if ($response instanceof \Symfony\Component\HttpFoundation\RedirectResponse) {
-                $sessionId = request()->hasSession() ? request()->session()->getId() : 'NO_SESSION';
-                \Illuminate\Support\Facades\Log::warning("REDIRECT_DETECTED | URL: " . request()->fullUrl() . " | Target: " . $response->getTargetUrl() . " | Status: " . $response->getStatusCode() . " | Session: " . $sessionId);
-            }
-        });
     }
 }
 
