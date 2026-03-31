@@ -28,24 +28,23 @@ class AppServiceProvider extends ServiceProvider
             config(['app.url' => rtrim($appUrl, '/')]);
         }
 
-        // 1. KUNCI Nama Database Central secara eksplisit (Pencegahan Kontaminasi Tenancy)
+        // 1. KUNCI Nama Database Central secara eksplisit
         config(['database.connections.central.database' => env('DB_DATABASE')]);
 
-        // 2. PAKSA SESSION untuk selalu menggunakan koneksi 'central' (Database Pusat)
+        // 2. KUNCI Jalur Sesi ke Root (PENTING agar cookie terbaca di semua sub-path tenant)
+        config(['session.path' => '/']);
         config(['session.connection' => 'central']);
         
         // 3. Pastikan Auth provider stabil
         config(['auth.providers.users.model' => \App\Models\User::class]);
 
-        // 4. Paksa skema HTTPS jika sedang diakses via secure protocol (Sesuai LiteSpeed/Proxy)
+        // 4. Paksa skema HTTPS jika sedang diakses via secure protocol
         $isSecure = request()->secure() || 
                     (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
                     str_starts_with(config('app.url', ''), 'https://');
                     
         if ($isSecure) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
-            
-            // PAKSA ATRIBUT COOKIE (Vital untuk Chrome/Modern Browsers di HTTPS)
             config(['session.secure' => true]);
             config(['session.same_site' => 'lax']);
         }
