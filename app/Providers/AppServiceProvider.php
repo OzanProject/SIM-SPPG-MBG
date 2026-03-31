@@ -22,26 +22,29 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Fix APP_URL trailing slash (Sering jadi penyebab redirect loop)
+        $appUrl = config('app.url');
+        if (str_ends_with($appUrl, '/')) {
+            config(['app.url' => rtrim($appUrl, '/')]);
+        }
+
         // Paksa HTTPS di lingkungan produksi/hosting agar URL generator konsisten
-        if (app()->environment('production') || config('app.force_https', false)) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
-        } elseif (!app()->isLocal() && request()->secure()) {
+        if (app()->environment('production') || config('app.force_https', false) || request()->secure()) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
-        // Fix Session Domain secara dinamis jika masih 'localhost' atau '127.0.0.1' di hosting
+        // Fix Session secara dinamis jika diakses lewat domain (bukan IP localhost)
         $currentHost = request()->getHost();
-        if (!app()->isLocal() && ($currentHost !== 'localhost' && $currentHost !== '127.0.0.1')) {
-            $sessionDomain = config('session.domain');
-            if (!$sessionDomain || $sessionDomain === 'localhost' || $sessionDomain === '127.0.0.1') {
-                // Gunakan host saat ini (tanpa subdomain jika ingin share session across subdomains, 
-                // tapi untuk path-based tenancy cukup gunakan host saat ini)
+        if ($currentHost !== 'localhost' && $currentHost !== '127.0.0.1' && !filter_var($currentHost, FILTER_VALIDATE_IP)) {
+            // Pastikan domain session tidak null agar cookie valid di sub-path
+            if (!config('session.domain')) {
                 config(['session.domain' => $currentHost]);
             }
             
-            // Pastikan secure cookie aktif jika lewat HTTPS
+            // PAKSA SECURE COOKIE jika diakses via HTTPS (Sangat krusial untuk Chrome/Modern Browsers)
             if (request()->secure()) {
                 config(['session.secure' => true]);
+                config(['session.same_site' => 'lax']);
             }
         }
 
