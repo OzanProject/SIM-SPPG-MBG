@@ -42,6 +42,9 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
+        // Kunci koneksi sesi ke 'central' (MySQL) agar tidak hilang saat pindah ke SQLite Dapur
+        config(['session.connection' => 'central']);
+
         config(['session.same_site' => 'lax']);
 
 
