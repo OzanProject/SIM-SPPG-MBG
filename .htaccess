@@ -1,13 +1,13 @@
+<IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteCond %{REQUEST_URI} !^/public/
-    RewriteRule ^(.*)$ public/$1 [L,QSA]
 
-# Block access to hidden files and directories (like .env, .git)
+    # Pastikan tidak ada looping jika sudah di folder public
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Block access to sensitive files (Tetap simpan ini)
 <FilesMatch "^\.">
-    Require all denied
-</FilesMatch>
-
-# Prevent viewing of web.config or others
-<FilesMatch "(?i)(\.(bak|conf|dist|fla|in[ci]|log|psd|sh|sql|sw[op]|env.*)|~)$">
     Require all denied
 </FilesMatch>

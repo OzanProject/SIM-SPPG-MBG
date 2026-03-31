@@ -31,10 +31,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // Guest users redirect ke /login (untuk central) atau /{tenant}/login (untuk tenant)
         $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
             if ($user = $request->user()) {
-                if ($user->tenant_id) {
-                    return "/{$user->tenant_id}/dashboard";
+                $target = $user->tenant_id ? "/{$user->tenant_id}/dashboard" : '/super-admin/dashboard';
+                
+                // Mencegah redirect jika kita sudah berada di target atau sub-pathnya
+                if ($request->is(trim($target, '/') . '*')) {
+                    return null;
                 }
-                return '/super-admin/dashboard';
+                
+                return $target;
             }
             return '/';
         });

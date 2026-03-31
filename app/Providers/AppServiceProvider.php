@@ -28,10 +28,18 @@ class AppServiceProvider extends ServiceProvider
             config(['app.url' => rtrim($appUrl, '/')]);
         }
 
-        // Paksa HTTPS jika APP_URL menggunakan https atau jika sedang diakses via https
-        $isHttpsConfigured = str_starts_with(config('app.url'), 'https://');
-        if ($isHttpsConfigured || app()->environment('production') || config('app.force_https', false) || request()->secure()) {
+        // Deteksi HTTPS dari Proxy/Hosting lebih kuat
+        $isSecure = request()->secure() || 
+                    (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+                    str_starts_with(config('app.url', ''), 'https://');
+
+        if ($isSecure) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
+            
+            // PAKSA SECURE COOKIE jika diakses via HTTPS (Vital untuk Chrome/Modern Browsers)
+            config(['session.secure' => true]);
+            config(['session.same_site' => 'lax']);
         }
 
         // Fix Session secara dinamis jika diakses lewat domain (bukan IP localhost)
@@ -40,12 +48,6 @@ class AppServiceProvider extends ServiceProvider
             // Pastikan domain session tidak null agar cookie valid di sub-path
             if (!config('session.domain')) {
                 config(['session.domain' => $currentHost]);
-            }
-            
-            // PAKSA SECURE COOKIE jika diakses via HTTPS (Sangat krusial untuk Chrome/Modern Browsers)
-            if (request()->secure()) {
-                config(['session.secure' => true]);
-                config(['session.same_site' => 'lax']);
             }
         }
 
