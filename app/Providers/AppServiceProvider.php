@@ -37,13 +37,17 @@ class AppServiceProvider extends ServiceProvider
         // 3. Pastikan Auth provider stabil
         config(['auth.providers.users.model' => \App\Models\User::class]);
 
-        // 4. Paksa skema HTTPS jika sedang diakses via secure protocol
+        // 4. Paksa skema HTTPS jika sedang diakses via secure protocol (Sesuai LiteSpeed/Proxy)
         $isSecure = request()->secure() || 
                     (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
                     str_starts_with(config('app.url', ''), 'https://');
                     
         if ($isSecure) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
+            
+            // PAKSA ATRIBUT COOKIE (Vital untuk Chrome/Modern Browsers di HTTPS)
+            config(['session.secure' => true]);
+            config(['session.same_site' => 'lax']);
         }
 
 
