@@ -25,6 +25,8 @@ class TenantMiddleware
     {
         // 1. Ambil slug tenant dari route parameter /{tenant}
         $slug = $request->route('tenant');
+        
+        \Illuminate\Support\Facades\Log::info("TENANT_INIT_START | Slug: " . ($slug ?? 'NULL') . " | Path: " . $request->path());
 
         if (!$slug) {
             return $next($request);
@@ -34,11 +36,13 @@ class TenantMiddleware
         $tenant = Tenant::on('central')->where('id', $slug)->first();
 
         if (!$tenant) {
+            \Illuminate\Support\Facades\Log::error("TENANT_INIT_FAIL | Tenant not found for slug: {$slug}");
             abort(404, 'Dapur (Tenant) tidak ditemukan.');
         }
 
         // 3. Inisialisasi Tenancy agar koneksi DB berpindah ke database tenant
         if (!tenant() || tenant('id') !== $tenant->id) {
+            \Illuminate\Support\Facades\Log::info("TENANT_INIT_SWITCH | Initializing database for: {$tenant->id}");
             tenancy()->initialize($tenant);
         }
 

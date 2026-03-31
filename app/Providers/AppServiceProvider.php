@@ -28,8 +28,9 @@ class AppServiceProvider extends ServiceProvider
             config(['app.url' => rtrim($appUrl, '/')]);
         }
 
-        // Paksa HTTPS di lingkungan produksi/hosting agar URL generator konsisten
-        if (app()->environment('production') || config('app.force_https', false) || request()->secure()) {
+        // Paksa HTTPS jika APP_URL menggunakan https atau jika sedang diakses via https
+        $isHttpsConfigured = str_starts_with(config('app.url'), 'https://');
+        if ($isHttpsConfigured || app()->environment('production') || config('app.force_https', false) || request()->secure()) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
