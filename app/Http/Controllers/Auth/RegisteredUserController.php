@@ -98,7 +98,7 @@ class RegisteredUserController extends Controller
             $promo = null;
             $discountAmount = 0;
             if ($request->promo_code) {
-                $promo = PromoCode::where('code', $request->promo_code)
+                $promo = \App\Models\PromoCode::where('code', $request->promo_code)
                     ->where('is_active', true)
                     ->where('starts_at', '<=', now())
                     ->where('ends_at', '>=', now())
@@ -117,8 +117,8 @@ class RegisteredUserController extends Controller
 
             $finalAmount = max(0, $plan->price - $discountAmount);
 
-            Invoice::create([
-                'invoice_number'       => Invoice::generateNumber(),
+            \App\Models\Invoice::create([
+                'invoice_number'       => \App\Models\Invoice::generateNumber(),
                 'tenant_id'            => $tenant->id,
                 'subscription_plan_id' => $plan->id,
                 'promo_code_id'        => $promo?->id,
@@ -133,11 +133,11 @@ class RegisteredUserController extends Controller
             ]);
 
             // PROVISION USER IN CENTRAL DB (For Global Login)
-            $user = User::create([
+            $user = \App\Models\Central\User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'whatsapp' => $request->whatsapp,
-                'password' => Hash::make($request->password),
+                'password' => \Illuminate\Support\Facades\Hash::make($request->password),
                 'tenant_id' => $tenant->id,
                 'role' => 'admin',
             ]);
@@ -160,28 +160,25 @@ class RegisteredUserController extends Controller
         // 4. Finalizing: Initialize Tenancy & Create Local User in TENANT DB
         tenancy()->initialize($tenant);
         
-        // PENTING: Gunakan DB facade dengan koneksi tenant, BUKAN User::query()
-        // User model kini di-pin ke 'central' connection, jangan gunakan untuk DML tenant
-        DB::connection('tenant')->table('users')->delete();
+        // PENTING: Gunakan DB facade dengan koneksi tenant
+        DB::connection('tenant')->table('users')->updateOrInsert(
+            ['email' => $request->email],
+            [
+                'name' => $request->name,
+                'whatsapp' => $request->whatsapp,
+                'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                'tenant_id' => $tenant->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
 
-        DB::connection('tenant')->table('users')->insert([
-            'name' => $request->name,
-            'email' => $request->email,
-            'whatsapp' => $request->whatsapp,
-            'password' => Hash::make($request->password),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // End tenancy context and switch back to central before login
+        // End tenancy context
         tenancy()->end();
 
-        event(new Registered($userCentral));
+        event(new \Illuminate\Auth\Events\Registered($userCentral));
         
-        // Simpan User ID secara eksplisit untuk Handover Sesi di Middleware Tenant
-        session(['user_id' => $userCentral->id]);
-        
-        Auth::login($userCentral);
+        Auth::guard('web')->login($userCentral);
 
         // Paket Gratis: Langsung ke Dashboard
         if ($plan->price <= 0 || $plan->price == '0.00' || $plan->price == 0) {

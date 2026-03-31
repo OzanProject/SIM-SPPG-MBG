@@ -61,10 +61,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->priority([
             \Illuminate\Session\Middleware\StartSession::class,
             \App\Http\Middleware\TenantMiddleware::class,
+            \App\Http\Middleware\EnsureUserBelongsToTenant::class,
+            \Illuminate\Auth\Middleware\Authenticate::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-            \Illuminate\Auth\Middleware\Authenticate::class,
-            \App\Http\Middleware\EnsureUserBelongsToTenant::class,
             \Illuminate\Session\Middleware\AuthenticateSession::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class,
             \Illuminate\Routing\Middleware\ValidateSignature::class,

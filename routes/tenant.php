@@ -20,16 +20,16 @@ Route::prefix('/{tenant}')->where(['tenant' => '^mbg-.*$'])->middleware([
     });
 
     // ── Halaman Pembayaran Pending ──
-    Route::prefix('payment')->name('tenant.payment.')->middleware(['auth', 'tenant.user_scope'])->group(function () {
+    Route::prefix('payment')->name('tenant.payment.')->middleware(['auth:tenant', 'tenant.user_scope'])->group(function () {
         Route::get('/pending', [\App\Http\Controllers\Auth\PaymentPendingController::class, 'show'])
             ->name('pending');
         Route::post('/upload-proof', [\App\Http\Controllers\Auth\PaymentPendingController::class, 'uploadProof'])
             ->name('upload-proof');
     });
 
-    Route::get('/dashboard', [\App\Http\Controllers\Tenant\DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Tenant\DashboardController::class, 'index'])->middleware(['auth:tenant', 'tenant.user_scope'])->name('dashboard');
 
-    Route::middleware(['auth', 'tenant.user_scope'])->group(function () {
+    Route::middleware(['auth:tenant', 'tenant.user_scope'])->group(function () {
 
         // Rute Billing & Langganan (Bebas Akses meski Kadaluarsa)
         Route::prefix('billing')->name('tenant.billing.')->group(function () {

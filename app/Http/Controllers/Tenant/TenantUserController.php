@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Tenant\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
@@ -13,7 +13,7 @@ class TenantUserController extends Controller
 {
     public function index()
     {
-        $users = User::where('tenant_id', tenant('id'))->with('roles')->get();
+        $users = User::with('roles')->get();
         // Jangan tampilkan role Super Admin di level Tenant
         $roles = Role::where('name', '!=', 'Super Admin')->get();
         return view('tenant.settings.users.index', compact('users', 'roles'));
@@ -29,7 +29,7 @@ class TenantUserController extends Controller
 
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', 'exists:roles,name', 'not_in:Super Admin'],
         ]);
@@ -46,12 +46,10 @@ class TenantUserController extends Controller
         return redirect()->back()->with('success', 'User berhasil ditambahkan.');
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, $id)
     {
-        if ($user->tenant_id !== tenant('id')) {
-            abort(403, 'Aksi tidak diizinkan. User bukan milik dapur ini.');
-        }
-
+        $user = User::findOrFail($id);
+        
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
@@ -75,13 +73,11 @@ class TenantUserController extends Controller
         return redirect()->back()->with('success', 'User berhasil diperbarui.');
     }
 
-    public function destroy(User $user)
+    public function destroy($id)
     {
-        if ($user->tenant_id !== tenant('id')) {
-            abort(403, 'Aksi tidak diizinkan. User bukan milik dapur ini.');
-        }
-
-        if ($user->id === auth()->id()) {
+        $user = User::findOrFail($id);
+        
+        if ($user->id === auth('tenant')->id()) {
             return redirect()->back()->with('error', 'Anda tidak bisa menghapus diri sendiri.');
         }
 

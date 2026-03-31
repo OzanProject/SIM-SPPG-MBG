@@ -15,29 +15,40 @@ class EnsureUserBelongsToTenant
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $tenantIdFromURL = strtolower(trim((string) tenant('id')));
-        $userStatus = auth()->check() ? 'LOGGED_IN' : 'GUEST';
-        $userTenantId = auth()->check() ? strtolower(trim((string) auth()->user()->tenant_id)) : 'N/A';
+        $currentTenant = tenant();
+        
+        // 1. Lewati jika bukan konteks tenant (folder dapur)
+        if (!$currentTenant) {
+            return $next($request);
+        }
 
-        // RAW LOG UNTUK DEBUGGING REDIRECT LOOP
-        \Illuminate\Support\Facades\Log::info("TENANT_SCOPE_ENTRY | Path: " . $request->path() . " | Status: {$userStatus} | User_Tenant: {$userTenantId} | URL_Tenant: {$tenantIdFromURL}");
+        // 2. Jika SUDAH login di Guard Tenant (SQLite), biarkan lewat
+        if (auth('tenant')->check()) {
+            return $next($request);
+        }
 
-        if (auth()->check() && $tenantIdFromURL) {
-            // Periksa apakah user benar-benar berhak di tenant ini
-            if ($userTenantId !== $tenantIdFromURL) {
-
-                // Berikan akses jika super-admin
-                if (auth()->user()->role === 'super-admin' || auth()->user()->role === 'superadmin') {
-                    return $next($request);
-                }
-
-                \Illuminate\Support\Facades\Log::error("TENANT_SCOPE | ACCESS_DENIED | User_Tenant: {$userTenantId} | URL_Tenant: {$tenantIdFromURL} | Path: " . $request->path());
+        // 3. Jika BELUM login di Tenant, tapi login di Guard Web (Pusat MySQL)
+        if (auth('web')->check()) {
+            $userCentral = auth('web')->user();
+            
+            // Cek apakah user pusat ini memang pemilik atau admin tenant ini
+            if ($userCentral->tenant_id === $currentTenant->id || in_array($userCentral->role, ['super-admin', 'superadmin'])) {
                 
-                // STOP LOOP: Jika tidak berhak, jangan redirect (yang bisa loop), langsung Abort 403.
-                abort(403, 'Anda tidak memiliki akses ke Dapur (Tenant) ini. Silakan kembali ke Dashboard Anda yang sah.');
+                // BRIDGE: Login otomatis ke Guard Tenant (Database SQLite Dapur)
+                // Cari user di SQLite berdasarkan email yang sama
+                $userTenant = \App\Models\Tenant\User::where('email', $userCentral->email)->first();
+                
+                if ($userTenant) {
+                    \Illuminate\Support\Facades\Log::info("AUTH_BRIDGE | Auto-login to Tenant: " . $currentTenant->id . " | User: " . $userTenant->email);
+                    auth('tenant')->login($userTenant);
+                    return $next($request);
+                } else {
+                    \Illuminate\Support\Facades\Log::error("AUTH_BRIDGE | User Central found but NOT in Tenant DB: " . $userCentral->email);
+                }
             }
         }
 
+        // 4. Jika semua gagal, biarkan middleware 'auth:tenant' di route menangani (redirect ke login dapur)
         return $next($request);
     }
 }

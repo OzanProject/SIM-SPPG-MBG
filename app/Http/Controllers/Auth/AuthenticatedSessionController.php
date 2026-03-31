@@ -26,57 +26,37 @@ class AuthenticatedSessionController extends Controller
     {
         // 1. Identifikasi konteks login (Dapur vs Super Admin)
         $currentTenant = tenant();
-        $user = null;
+        
+        // Pilih Guard & Model berdasarkan konteks
+        $guard = $currentTenant ? 'tenant' : 'web';
+        $model = $currentTenant ? \App\Models\Tenant\User::class : \App\Models\Central\User::class;
 
+        // 2. Cari User
+        $userQuery = $model::where('email', $request->email);
+        
+        // Jika login via dapur, pastikan user tsb memang milik tenant ini
         if ($currentTenant) {
-            // LOGIN VIA DAPUR (Koneksi DB sudah terpindah ke Tenant oleh Middleware)
-            // Namun user tetap dicari di database PUSAT (karena protected $connection = 'central' di Model User)
-            $user = \App\Models\User::where('email', $request->email)
-                ->where('tenant_id', $currentTenant->id)
-                ->first();
-            
-            \Illuminate\Support\Facades\Log::info("LOGIN_DEBUG | Context: Tenant | Slug: {$currentTenant->id} | User Found: " . ($user ? 'YES' : 'NO'));
-        } else {
-            // LOGIN GLOBAL / SUPER ADMIN
-            $user = \App\Models\User::where('email', $request->email)->first();
-            \Illuminate\Support\Facades\Log::info("LOGIN_DEBUG | Context: Global | User Found: " . ($user ? 'YES' : 'NO'));
+            $userQuery->where('tenant_id', $currentTenant->id);
         }
 
-        // 2. Validasi Kredensial
+        $user = $userQuery->first();
+
+        // 3. Validasi Kredensial
         if (!$user || !\Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
             return back()->withErrors(['email' => 'Email atau password salah.']);
         }
 
-        // 3. Eksekusi Login (Guard Web)
-        \Illuminate\Support\Facades\Auth::login($user, $request->boolean('remember'));
-        
-        // Simpan User ID secara eksplisit untuk Handover Sesi di Middleware Tenant
-        session([
-            'user_id'      => $user->id,
-            'is_logged_in' => true,
-        ]);
+        // 4. Eksekusi Login dengan Guard yang tepat
+        Auth::guard($guard)->login($user, $request->boolean('remember'));
         
         $request->session()->regenerate();
 
-        // 4. Set Session Tenant untuk Session Binding Middleware
-        if ($user->tenant_id) {
-            session(['tenant_id' => $user->tenant_id]);
-            \Illuminate\Support\Facades\Session::save(); // Force save session before redirect
-            
-            // Gunakan slug aktif (sppg-cek) jika sedang dalam konteks tenant, agar URL tidak berubah
-            $redirectSlug = $currentTenant ? $currentTenant->id : $user->tenant_id;
-            
-            \Illuminate\Support\Facades\Log::info("LOGIN_DEBUG | Redirecting to Tenant: {$redirectSlug} | User ID: {$user->id}");
-            \Illuminate\Support\Facades\Session::save();
-            return redirect("/{$redirectSlug}/dashboard");
+        // 5. Redirect ke Dashboard yang sesuai
+        if ($guard === 'tenant') {
+            return redirect("/" . $currentTenant->id . "/dashboard");
         }
 
-        // 5. Redirect Super Admin (Eksplisit)
-        \Illuminate\Support\Facades\Session::save();
-        \Illuminate\Support\Facades\Log::info("LOGIN_DEBUG | Redirecting to Super Admin | User ID: {$user->id}");
         return redirect('/super-admin/dashboard');
-
-
     }
 
     /**
@@ -84,7 +64,9 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::guard('web')->logout();
+        $guard = tenant() ? 'tenant' : 'web';
+        
+        Auth::guard($guard)->logout();
 
         $request->session()->invalidate();
 
