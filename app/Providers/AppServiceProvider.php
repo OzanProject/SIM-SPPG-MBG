@@ -37,11 +37,8 @@ class AppServiceProvider extends ServiceProvider
         // 3. Pastikan Auth provider stabil
         config(['auth.providers.users.model' => \App\Models\User::class]);
 
-        // 4. Deteksi HTTPS (Hanya untuk URL generation)
-        $isSecure = request()->secure() || 
-                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
-                    
-        if ($isSecure) {
+        // Paksa HTTPS di lingkungan produksi/hosting
+        if (app()->environment('production') || config('app.url') !== 'http://localhost') {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 

@@ -32,6 +32,18 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.init'         => \App\Http\Middleware\TenantMiddleware::class,
         ]);
 
+        // Guest users redirect ke /login (untuk central) atau /{tenant}/login (untuk tenant)
+        $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
+            if ($user = $request->user()) {
+                // Sangat sederhana: kembalikan ke dapor masing-masing
+                if ($user->tenant_id) {
+                    return "/{$user->tenant_id}/dashboard";
+                }
+                return '/super-admin/dashboard';
+            }
+            return '/';
+        });
+
         // $middleware->appendToGroup('web', [
         //     \App\Http\Middleware\SecureHeaders::class,
         // ]);

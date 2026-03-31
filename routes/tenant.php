@@ -27,7 +27,7 @@ Route::prefix('/{tenant}')->where(['tenant' => '^mbg-.*$'])->middleware([
             ->name('upload-proof');
     });
 
-    Route::get('/dashboard', [\App\Http\Controllers\Tenant\DashboardController::class, 'index'])->middleware(['auth', 'tenant.user_scope'])->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Tenant\DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
     Route::middleware(['auth', 'tenant.user_scope'])->group(function () {
 
