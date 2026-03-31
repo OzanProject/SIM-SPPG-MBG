@@ -52,7 +52,7 @@ class TenantMiddleware
             session(['user_id' => auth()->id()]);
         } elseif (session()->has('user_id')) {
             // Jika auth hilang karena switch DB, login ulang menggunakan ID dari sesi (Model dipinning ke 'central')
-            auth()->loginUsingId(session('user_id'));
+            \Illuminate\Support\Facades\Auth::loginUsingId(session('user_id'));
         }
 
         // 5. Set instance & session untuk referensi
