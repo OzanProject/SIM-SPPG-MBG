@@ -28,27 +28,21 @@ class AppServiceProvider extends ServiceProvider
             config(['app.url' => rtrim($appUrl, '/')]);
         }
 
-        // Paksa skema HTTPS jika sedang diakses via secure protocol (Sesuai cPanel)
-        if (request()->secure() || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
+        // PAKSA SESSION untuk selalu menggunakan koneksi 'central' (Database Pusat)
+        // Ini VITAL agar sesi tidak hilang saat database berpindah ke tenant
+        config(['session.connection' => 'central']);
+        
+        // Pastikan Auth juga menggunakan provider yang benar-benar stabil
+        config(['auth.providers.users.model' => \App\Models\User::class]);
+
+        // Paksa skema HTTPS jika sedang diakses via secure protocol (Sesuai cPanel/LiteSpeed)
+        $isSecure = request()->secure() || 
+                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+                    str_starts_with(config('app.url', ''), 'https://');
+                    
+        if ($isSecure) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
-
-        // Fix Session secara dinamis jika diakses lewat domain (bukan IP localhost)
-        $currentHost = request()->getHost();
-        if ($currentHost !== 'localhost' && $currentHost !== '127.0.0.1' && !filter_var($currentHost, FILTER_VALIDATE_IP)) {
-            // Pastikan domain session tidak null agar cookie valid di sub-path
-            if (!config('session.domain')) {
-                config(['session.domain' => $currentHost]);
-            }
-            
-            // PAKSA SECURE COOKIE jika diakses via HTTPS (Vital untuk Chrome/Modern Browsers)
-            if (request()->secure()) {
-                config(['session.secure' => true]);
-                config(['session.same_site' => 'lax']);
-            }
-        }
-        // PAKSA SESSION untuk selalu di database CENTRAL (Fungsi Vital untuk Tenancy)
-        config(['session.connection' => 'central']);
 
 
 
