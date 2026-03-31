@@ -37,22 +37,6 @@ return Application::configure(basePath: dirname(__DIR__))
         // ]);
 
 
-        // Guest users redirect ke /login (berfungsi sebagai pusat utama)
-        $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
-            if ($user = $request->user()) {
-                $target = $user->tenant_id ? "/{$user->tenant_id}/dashboard" : '/super-admin/dashboard';
-                
-                // JANGAN REDIRECT jika kita sudah di halaman dashboard atau sub-pathnya
-                if ($request->is(trim($target, '/') . '*')) {
-                    return null;
-                }
-                
-                return $target;
-            }
-            return '/login';
-        });
-
-
 
         /**
          * MIDDLEWARE PRIORITY - Urutan eksekusi yang benar:
