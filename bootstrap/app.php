@@ -12,7 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         // Wajib untuk Hosting Shared agar protokol HTTPS terbaca benar
-        $middleware->trustProxies(at: '*');
+        $middleware->trustProxies(at: '*', headers: \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR |
+            \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_HOST |
+            \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PORT |
+            \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_PROTO |
+            \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_AWS_ELB
+        );
 
         $middleware->alias([
             'tenant.subscription' => \App\Http\Middleware\CheckTenantSubscription::class,

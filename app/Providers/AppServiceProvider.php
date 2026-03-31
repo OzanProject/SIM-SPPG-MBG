@@ -28,22 +28,9 @@ class AppServiceProvider extends ServiceProvider
             config(['app.url' => rtrim($appUrl, '/')]);
         }
 
-        // Deteksi HTTPS dari Proxy/Hosting lebih kuat
-        $isSecure = request()->secure() || 
-                    (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
-                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
-                    (isset($_SERVER['HTTP_CF_VISITOR']) && str_contains($_SERVER['HTTP_CF_VISITOR'], 'https')) ||
-                    str_starts_with(config('app.url', ''), 'https://');
-
-        if ($isSecure) {
+        // Paksa skema HTTPS jika sedang diakses via secure protocol (Sesuai cPanel)
+        if (request()->secure() || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
-            
-            // PAKSA HEADER HTTPS untuk Laravel agar tidak merasa "mendua"
-            request()->server->set('HTTPS', 'on');
-            
-            // PAKSA SECURE COOKIE jika diakses via HTTPS (Vital untuk Chrome/Modern Browsers)
-            config(['session.secure' => true]);
-            config(['session.same_site' => 'lax']);
         }
 
         // Fix Session secara dinamis jika diakses lewat domain (bukan IP localhost)
@@ -52,6 +39,12 @@ class AppServiceProvider extends ServiceProvider
             // Pastikan domain session tidak null agar cookie valid di sub-path
             if (!config('session.domain')) {
                 config(['session.domain' => $currentHost]);
+            }
+            
+            // PAKSA SECURE COOKIE jika diakses via HTTPS (Vital untuk Chrome/Modern Browsers)
+            if (request()->secure()) {
+                config(['session.secure' => true]);
+                config(['session.same_site' => 'lax']);
             }
         }
 
