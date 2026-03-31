@@ -45,8 +45,6 @@ class AppServiceProvider extends ServiceProvider
             \Illuminate\Support\Facades\URL::forceScheme('https');
         }
 
-        // Matikan secure cookie sementara untuk tes stabilitas di shared hosting
-        config(['session.secure' => false]);
         config(['session.same_site' => 'lax']);
 
 

@@ -22,7 +22,7 @@ Route::get('/{section?}', [\App\Http\Controllers\LandingController::class, 'inde
 Route::get('/page/{slug}', [\App\Http\Controllers\LandingController::class, 'page'])
     ->name('front.page');
 
-Route::middleware(['auth', 'role:Super Admin'])->group(function () {
+Route::middleware(['web', 'auth', 'role:Super Admin'])->group(function () {
     Route::get('/super-admin/dashboard', [DashboardController::class, 'index'])->name('super-admin.dashboard');
     
     Route::get('/super-admin/profile', [SuperAdminProfileController::class, 'edit'])->name('super-admin.profile.edit');
