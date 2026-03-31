@@ -11,6 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [
+            \App\Http\Middleware\RestoreAuthMiddleware::class,
+        ]);
+
         // Wajib untuk Hosting Shared agar protokol HTTPS terbaca benar
         $middleware->trustProxies(at: '*', headers: \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_FOR |
             \Symfony\Component\HttpFoundation\Request::HEADER_X_FORWARDED_HOST |

@@ -40,23 +40,10 @@ class TenantMiddleware
             return $next($request);
         }
 
-        // 3. Inisialisasi Tenancy
+        // 4. Inisialisasi Tenancy
         if (!tenancy()->initialized || tenant('id') !== $tenant->id) {
             \Illuminate\Support\Facades\Log::info("TENANT_INIT_SWITCH | Initializing database for: {$tenant->id}");
             tenancy()->initialize($tenant);
-        }
-
-        // 4. 🔥 FIX AUTH LOOP: Sinkronisasi Sesi & Auth (Final Sweep)
-        // Jika user pindah ke rute tenant, pastikan ID User dipusat tetap terbaca
-        if (auth()->check()) {
-            session([
-                'user_id'      => auth()->id(),
-                'is_logged_in' => true
-            ]);
-        } elseif (session('is_logged_in') && session()->has('user_id')) {
-            // Restore Auth jika hilang akibat switch DB (Model pinned ke 'central')
-            \Illuminate\Support\Facades\Log::info("AUTH_RESTORE | Restoring user ID: " . session('user_id'));
-            \Illuminate\Support\Facades\Auth::loginUsingId(session('user_id'));
         }
 
         // 5. Set instance & session untuk referensi

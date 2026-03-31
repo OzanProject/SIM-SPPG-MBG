@@ -11,7 +11,7 @@ use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('/{tenant}')->where(['tenant' => '^(?!login|logout|super-admin|api|up|register|password)[^/]+$'])->middleware([
+Route::prefix('/{tenant}')->where(['tenant' => '^mbg-.*$'])->middleware([
     'web',
     'tenant.init',
 ])->group(function () {
