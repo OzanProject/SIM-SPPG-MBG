@@ -28,26 +28,26 @@ class AppServiceProvider extends ServiceProvider
             config(['app.url' => rtrim($appUrl, '/')]);
         }
 
-        // 1. KUNCI Nama Database Central secara eksplisit
+        // 1. KUNCI Nama Database Central
         config(['database.connections.central.database' => env('DB_DATABASE')]);
 
-        // 2. KUNCI Jalur Sesi ke Root (PENTING agar cookie terbaca di semua sub-path tenant)
+        // 2. KUNCI Jalur Sesi ke Root (PENTING)
         config(['session.path' => '/']);
-        config(['session.connection' => 'central']);
         
         // 3. Pastikan Auth provider stabil
         config(['auth.providers.users.model' => \App\Models\User::class]);
 
-        // 4. Paksa skema HTTPS jika sedang diakses via secure protocol
+        // 4. Deteksi HTTPS (Hanya untuk URL generation)
         $isSecure = request()->secure() || 
-                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
-                    str_starts_with(config('app.url', ''), 'https://');
+                    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
                     
         if ($isSecure) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
-            config(['session.secure' => true]);
-            config(['session.same_site' => 'lax']);
         }
+
+        // Matikan secure cookie sementara untuk tes stabilitas di shared hosting
+        config(['session.secure' => false]);
+        config(['session.same_site' => 'lax']);
 
 
 
