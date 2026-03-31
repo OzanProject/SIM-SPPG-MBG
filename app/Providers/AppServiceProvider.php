@@ -32,10 +32,14 @@ class AppServiceProvider extends ServiceProvider
         $isSecure = request()->secure() || 
                     (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
                     (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+                    (isset($_SERVER['HTTP_CF_VISITOR']) && str_contains($_SERVER['HTTP_CF_VISITOR'], 'https')) ||
                     str_starts_with(config('app.url', ''), 'https://');
 
         if ($isSecure) {
             \Illuminate\Support\Facades\URL::forceScheme('https');
+            
+            // PAKSA HEADER HTTPS untuk Laravel agar tidak merasa "mendua"
+            request()->server->set('HTTPS', 'on');
             
             // PAKSA SECURE COOKIE jika diakses via HTTPS (Vital untuk Chrome/Modern Browsers)
             config(['session.secure' => true]);

@@ -41,7 +41,8 @@ class TenantMiddleware
         }
 
         // 3. Inisialisasi Tenancy agar koneksi DB berpindah ke database tenant
-        if (!tenant() || tenant('id') !== $tenant->id) {
+        // Pastikan tidak melakukan inisialisasi ulang jika sudah aktif untuk tenant yang sama
+        if (!tenancy()->initialized || tenant('id') !== $tenant->id) {
             \Illuminate\Support\Facades\Log::info("TENANT_INIT_SWITCH | Initializing database for: {$tenant->id}");
             tenancy()->initialize($tenant);
         }
