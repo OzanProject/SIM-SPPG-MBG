@@ -23,8 +23,7 @@ class EnsureUserBelongsToTenant
         \Illuminate\Support\Facades\Log::info("TENANT_SCOPE_ENTRY | Path: " . $request->path() . " | Status: {$userStatus} | User_Tenant: {$userTenantId} | URL_Tenant: {$tenantIdFromURL}");
 
         if (auth()->check() && $tenantIdFromURL) {
-
-            // Perbaiki perbandingan dengan normalisasi case
+            // Periksa apakah user benar-benar berhak di tenant ini
             if ($userTenantId !== $tenantIdFromURL) {
 
                 // Berikan akses jika super-admin
@@ -32,28 +31,13 @@ class EnsureUserBelongsToTenant
                     return $next($request);
                 }
 
-                // Redirect ke tenant dia yang benar hanya jika URL saat ini tidak cocok
-                $targetDashboard = "/" . $userTenantId . "/dashboard";
+                \Illuminate\Support\Facades\Log::error("TENANT_SCOPE | ACCESS_DENIED | User_Tenant: {$userTenantId} | URL_Tenant: {$tenantIdFromURL} | Path: " . $request->path());
                 
-                // CEK KRITIKAL: Jangan redirect jika kita SUDAH berada di target URL yang sama (mencegah loop tak terhingga)
-                if ($userTenantId && $userTenantId !== 'GUEST' && !$request->is($userTenantId . '*')) {
-                    \Illuminate\Support\Facades\Log::warning("TENANT_SCOPE | Redirecting to correct tenant dashboard: {$targetDashboard}");
-                    \Illuminate\Support\Facades\Session::save();
-                    return redirect()->to($targetDashboard);
-                }
-
-                // Jika sudah di URL yang "mendekati" itu tapi tetap tidak cocok (mungkin subpath), 
-                // tapi kita masih di sini berarti ada akses ditolak
-                if (!$request->routeIs('login') && !$request->is($userTenantId . '*')) {
-                    \Illuminate\Support\Facades\Log::error("TENANT_SCOPE | Access Denied | User: {$userTenantId} | URL Context: {$tenantIdFromURL} | Path: " . $request->path());
-                    
-                    // Alih-alih logout (yang bisa loop), arahkan ke central login atau error page yang aman
-                    return redirect('/')->with('error', 'Anda tidak memiliki akses ke Dapur (Tenant) ini.');
-                }
+                // STOP LOOP: Jika tidak berhak, jangan redirect (yang bisa loop), langsung Abort 403.
+                abort(403, 'Anda tidak memiliki akses ke Dapur (Tenant) ini. Silakan kembali ke Dashboard Anda yang sah.');
             }
         }
 
         return $next($request);
     }
-
 }
