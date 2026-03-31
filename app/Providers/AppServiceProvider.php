@@ -47,6 +47,9 @@ class AppServiceProvider extends ServiceProvider
                 config(['session.same_site' => 'lax']);
             }
         }
+        // PAKSA SESSION untuk selalu di database CENTRAL (Fungsi Vital untuk Tenancy)
+        config(['session.connection' => 'central']);
+
 
 
         // Bagikan konfigurasi aplikasi ke semua view secara global

@@ -33,19 +33,19 @@ return Application::configure(basePath: dirname(__DIR__))
         // ]);
 
 
-        // Guest users redirect ke /login (untuk central) atau /{tenant}/login (untuk tenant)
+        // Guest users redirect ke /login (berfungsi sebagai pusat utama)
         $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
             if ($user = $request->user()) {
                 $target = $user->tenant_id ? "/{$user->tenant_id}/dashboard" : '/super-admin/dashboard';
                 
-                // Mencegah redirect jika kita sudah berada di target atau sub-pathnya
+                // JANGAN REDIRECT jika kita sudah di halaman dashboard atau sub-pathnya
                 if ($request->is(trim($target, '/') . '*')) {
                     return null;
                 }
                 
                 return $target;
             }
-            return '/';
+            return '/login';
         });
 
 
@@ -53,25 +53,14 @@ return Application::configure(basePath: dirname(__DIR__))
         /**
          * MIDDLEWARE PRIORITY - Urutan eksekusi yang benar:
          * 
-         * 1. StartSession      - Sesi HARUS aktif sebelum apapun (tenant_id disimpan di sesi)
+         * 1. StartSession      - Sesi HARUS aktif sebelum apapun
          * 2. TenantMiddleware  - Identifikasi & inisialisasi database tenant
-         * 3. SubstituteBindings - Resolve route model bindings (Account, Item, dll) 
-         *                        SETELAH koneksi DB sudah berpindah ke tenant
+         * 3. SubstituteBindings - Resolve route model bindings
          * 4. Authenticate      - Cek login user
          */
         $middleware->priority([
             \Illuminate\Session\Middleware\StartSession::class,
-            function ($request, $next) {
-                $status = auth()->check() ? 'LOGGED_IN' : 'GUEST';
-                \Illuminate\Support\Facades\Log::info("DIAG_AUTH_START | Path: " . $request->path() . " | Status: {$status}");
-                return $next($request);
-            },
             \App\Http\Middleware\TenantMiddleware::class,
-            function ($request, $next) {
-                $status = auth()->check() ? 'LOGGED_IN' : 'GUEST';
-                \Illuminate\Support\Facades\Log::info("DIAG_AUTH_AFTER_TENANT | Path: " . $request->path() . " | Status: {$status}");
-                return $next($request);
-            },
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \Illuminate\Auth\Middleware\Authenticate::class,
