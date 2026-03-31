@@ -164,7 +164,8 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Event::listen(\Illuminate\Foundation\Http\Events\RequestHandled::class, function ($event) {
             $response = $event->response;
             if ($response instanceof \Symfony\Component\HttpFoundation\RedirectResponse) {
-                \Illuminate\Support\Facades\Log::warning("REDIRECT_DETECTED | URL: " . request()->fullUrl() . " | Target: " . $response->getTargetUrl() . " | Status: " . $response->getStatusCode());
+                $sessionId = request()->hasSession() ? request()->session()->getId() : 'NO_SESSION';
+                \Illuminate\Support\Facades\Log::warning("REDIRECT_DETECTED | URL: " . request()->fullUrl() . " | Target: " . $response->getTargetUrl() . " | Status: " . $response->getStatusCode() . " | Session: " . $sessionId);
             }
         });
     }
