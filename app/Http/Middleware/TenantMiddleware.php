@@ -32,12 +32,12 @@ class TenantMiddleware
             return $next($request);
         }
 
-        // 2. Cari tenant dari central DB (eksplisit 'central' agar tidak terpengaruh state koneksi)
+        // 2. Cari tenant dari central DB
         $tenant = Tenant::on('central')->where('id', $slug)->first();
 
         if (!$tenant) {
-            \Illuminate\Support\Facades\Log::error("TENANT_INIT_FAIL | Tenant not found for slug: {$slug}");
-            abort(404, 'Dapur (Tenant) tidak ditemukan.');
+            // Bukan tenant yang valid, biarkan Laravel menangani rute secara normal (mungkin 404 dari router)
+            return $next($request);
         }
 
         // 3. Inisialisasi Tenancy

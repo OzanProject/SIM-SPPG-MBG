@@ -177,6 +177,10 @@ class RegisteredUserController extends Controller
         tenancy()->end();
 
         event(new Registered($userCentral));
+        
+        // Simpan User ID secara eksplisit untuk Handover Sesi di Middleware Tenant
+        session(['user_id' => $userCentral->id]);
+        
         Auth::login($userCentral);
 
         // Paket Gratis: Langsung ke Dashboard

@@ -49,6 +49,10 @@ class AuthenticatedSessionController extends Controller
 
         // 3. Eksekusi Login (Guard Web)
         \Illuminate\Support\Facades\Auth::login($user, $request->boolean('remember'));
+        
+        // Simpan User ID secara eksplisit untuk Handover Sesi di Middleware Tenant
+        session(['user_id' => $user->id]);
+        
         $request->session()->regenerate();
 
         // 4. Set Session Tenant untuk Session Binding Middleware
