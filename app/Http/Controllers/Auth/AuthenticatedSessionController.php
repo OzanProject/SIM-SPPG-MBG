@@ -34,9 +34,11 @@ class AuthenticatedSessionController extends Controller
         // 2. Cari User
         $userQuery = $model::where('email', $request->email);
         
-        // Jika login via dapur, pastikan user tsb memang milik tenant ini
-        if ($currentTenant) {
-            $userQuery->where('tenant_id', $currentTenant->id);
+        // Jika login via Central, mungkin perlu memfilter tenant_id. 
+        // Tapi jika login via Tenant (SQLite), tidak perlu (dan akan error jika ada 'where tenant_id')
+        // karena SQLite tenant sudah terisolasi dan tabel users-nya tidak memiliki kolom tenant_id.
+        if (!$currentTenant && $guard === 'web') {
+            // Optional: Jika ingin Super Admin hanya check email, biarkan saja.
         }
 
         $user = $userQuery->first();

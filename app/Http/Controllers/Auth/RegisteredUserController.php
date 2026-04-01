@@ -167,7 +167,6 @@ class RegisteredUserController extends Controller
                 'name' => $request->name,
                 'whatsapp' => $request->whatsapp,
                 'password' => \Illuminate\Support\Facades\Hash::make($request->password),
-                'tenant_id' => $tenant->id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]

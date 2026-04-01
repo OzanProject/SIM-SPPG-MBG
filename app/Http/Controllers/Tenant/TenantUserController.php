@@ -38,7 +38,6 @@ class TenantUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'tenant_id' => tenant('id'),
         ]);
 
         $user->assignRole($request->role);
