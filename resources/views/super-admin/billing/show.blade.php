@@ -49,22 +49,13 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <h6 class="text-muted text-uppercase font-weight-bold" style="font-size: 0.7rem; letter-spacing: 1px;">TAGIHAN KEPADA</h6>
-                                <p class="mb-0 font-weight-bold text-dark" style="font-size: 1.1rem;">{{ $billing->tenant_id }}</p>
-                                @if($billing->tenant && $billing->tenant->domains->first())
-                                    <p class="text-muted mb-0 d-flex align-items-center" style="gap: 5px;">
-                                        <i class="fas fa-globe"></i> 
-                                        <a href="//{{ $billing->tenant->domains->first()->domain }}" target="_blank" class="text-primary text-truncate" style="max-width: 280px; text-decoration: none;">
-                                            {{ $billing->tenant->domains->first()->domain }}
-                                        </a>
-                                    </p>
-                                @elseif($billing->tenant)
-                                    <p class="text-muted mb-0 d-flex align-items-center" style="gap: 5px;">
-                                        <i class="fas fa-globe"></i> 
-                                        <a href="{{ url('/' . $billing->tenant_id) }}" target="_blank" class="text-primary text-truncate" style="max-width: 280px; text-decoration: none;">
-                                            {{ url('/' . $billing->tenant_id) }}
-                                        </a>
-                                    </p>
-                                @endif
+                                <p class="mb-0 font-weight-bold text-dark" style="font-size: 1.1rem;">{{ $billing->tenant->name ?? $billing->tenant_id }}</p>
+                                <p class="text-muted mb-1"><small>ID: {{ $billing->tenant_id }}</small></p>
+                                <p class="mb-0">
+                                    <a href="{{ url('/' . $billing->tenant_id . '/dashboard') }}" target="_blank" class="text-primary" style="font-size: 0.9rem;">
+                                        <i class="fas fa-external-link-alt mr-1"></i>{{ url('/' . $billing->tenant_id . '/dashboard') }}
+                                    </a>
+                                </p>
                             </div>
                             <div class="col-md-6 text-right">
                                 <h6 class="text-muted text-uppercase font-weight-bold" style="font-size: 0.7rem; letter-spacing: 1px;">JATUH TEMPO</h6>
