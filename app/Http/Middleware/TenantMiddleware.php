@@ -36,8 +36,9 @@ class TenantMiddleware
         $tenant = Tenant::on('central')->where('id', $slug)->first();
 
         if (!$tenant) {
-            // Bukan tenant yang valid, biarkan Laravel menangani rute secara normal (mungkin 404 dari router)
-            return $next($request);
+            // Bukan tenant yang valid, langsung abort 404 daripada meneruskan rute
+            // yang akan berakhir pada fatal error tanpa inisialisasi tenancy.
+            abort(404, 'Dapur tidak ditemukan.');
         }
 
         // 4. Inisialisasi Tenancy

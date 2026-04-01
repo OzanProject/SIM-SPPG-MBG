@@ -58,6 +58,11 @@ class AuthenticatedSessionController extends Controller
             return redirect("/" . $currentTenant->id . "/dashboard");
         }
 
+        // Jika user login via halaman Central (/login) tapi aslinya adalah user tenant
+        if ($user->tenant_id) {
+            return redirect("/" . $user->tenant_id . "/dashboard");
+        }
+
         return redirect('/super-admin/dashboard');
     }
 
