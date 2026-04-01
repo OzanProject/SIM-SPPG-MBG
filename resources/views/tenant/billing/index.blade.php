@@ -50,8 +50,8 @@
 
         <div class="row">
             <!-- STATUS SAAT INI -->
-            <div class="col-md-5">
-                <div class="card card-outline card-primary shadow-sm" style="border-radius: 12px;">
+            <div class="col-md-5 mb-4">
+                <div class="card card-outline card-primary shadow-sm h-100" style="border-radius: 12px;">
                     <div class="card-header bg-white border-bottom-0 pb-0">
                         <h4 class="font-weight-bold text-dark mb-0">Paket Aktif Saat Ini</h4>
                     </div>
@@ -111,18 +111,20 @@
                         @if(!$isActive)
                             <div class="alert alert-danger bg-danger text-white border-0 mt-2 mb-0" style="border-radius: 8px;">
                                 <h5><i class="icon fas fa-ban"></i> Akses Dibatasi!</h5>
-                                Akses penuh ke aplikasi dikunci karena masa aktif telah habis. Berlakukan perpanjangan segera.
+                                Akses penuh dikunci karena masa aktif telah habis.
                             </div>
                         @else
                             <div class="alert alert-info bg-info text-white border-0 mt-2 mb-0" style="border-radius: 8px;">
-                                Pembayaran perpanjangan disarankan dilakukan minimal 3 hari sebelum kadaluarsa untuk menghindari pemblokiran.
+                                Pembayaran perpanjangan disarankan dilakukan minimal 3 hari sebelum kadaluarsa.
                             </div>
                         @endif
                     </div>
                 </div>
+            </div>
                 
-                <!-- RIWAYAT TAGIHAN -->
-                <div class="card shadow-sm border-0" style="border-radius: 12px;">
+            <!-- RIWAYAT TAGIHAN -->
+            <div class="col-md-7 mb-4">
+                <div class="card shadow-sm border-0 h-100" style="border-radius: 12px;">
                     <div class="card-header bg-white">
                         <h3 class="card-title font-weight-bold">Riwayat Tagihan</h3>
                     </div>
@@ -164,135 +166,155 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- PILIH PAKET -->
-            <div class="col-md-7">
-                <div class="card shadow-sm border-0" style="border-radius: 12px;">
-                    <div class="card-header bg-white border-bottom-0 pb-0 d-flex justify-content-between align-items-center">
-                        <div>
-                            <h4 class="font-weight-bold text-dark mb-0"><i class="fas fa-rocket text-primary mr-1"></i> Pilih Paket Langganan</h4>
-                            <p class="text-muted mt-1 mb-0">Tingkatkan operasional & keuntungan bisnis Anda.</p>
-                        </div>
-                        @if(tenant()->is_on_trial)
-                            <span class="badge badge-warning p-2 shadow-sm animate__animated animate__pulse animate__infinite" style="border-radius:10px;">
-                                <i class="fas fa-clock mr-1"></i> {{ tenant()->trial_days_left }} Hari Trial PRO Sisa
-                            </span>
-                        @endif
-                    </div>
-                    <div class="card-body">
-                        <form action="{{ route('tenant.billing.checkout') }}" method="POST">
-                            @csrf
-                            <div class="row">
-                                @forelse($plans as $plan)
-                                <div class="col-sm-6 mb-3">
-                                    <label class="w-100" style="cursor: pointer;">
-                                        <input type="radio" name="plan_id" value="{{ $plan->id }}" class="d-none plan-radio" required>
-                                        <div class="card card-outline {{ $plan->is_highlighted ? 'card-warning shadow' : 'card-primary' }} h-100 plan-card" style="border-width: 2px; transition: 0.3s; position: relative; overflow: hidden;">
-                                            @if($plan->is_highlighted)
-                                                <div style="position: absolute; top: 12px; right: -30px; background: #ffc107; color: #000; padding: 2px 40px; transform: rotate(45deg); font-size: 0.65rem; font-weight: 800; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                                    {{ $plan->badge_label ?? 'POPULER' }}
-                                                </div>
+        <!-- PILIH PAKET FULL WIDTH -->
+        <div class="card shadow-sm border-0 mt-3" style="border-radius: 12px;">
+            <div class="card-header bg-white border-bottom-0 pb-0 pt-4 text-center">
+                <h3 class="font-weight-bold text-dark mb-1">Upgrade / Perpanjang Paket Langganan</h3>
+                <p class="text-muted">Pilih paket yang sesuai dengan kebutuhan dan ukuran bisnis Dapur Anda.</p>
+                @if(tenant()->is_on_trial)
+                    <span class="badge badge-warning p-2 shadow-sm animate__animated animate__pulse animate__infinite mt-2" style="border-radius:10px;">
+                        <i class="fas fa-clock mr-1"></i> {{ tenant()->trial_days_left }} Hari Trial PRO Sisa
+                    </span>
+                @endif
+            </div>
+            
+            <div class="card-body pt-5 pb-5 bg-light rounded-bottom" style="border-radius: 12px;">
+                <form action="{{ route('tenant.billing.checkout') }}" method="POST">
+                    @csrf
+                    <div class="row custom-plan-row justify-content-center">
+                        @forelse($plans as $plan)
+                        <div class="col-lg-3 col-md-6 mb-4">
+                            <label class="w-100 h-100 m-0" style="cursor: pointer;">
+                                <input type="radio" name="plan_id" value="{{ $plan->id }}" class="d-none plan-radio" required>
+                                <div class="card h-100 plan-card pricing-card text-center relative bg-white border-0 shadow-sm">
+                                    
+                                    @if($plan->price == 0 || $plan->price == '0.00')
+                                        <div class="corner-ribbon top-right sticky green shadow">GRATIS</div>
+                                    @endif
+
+                                    <div class="card-body p-4 d-flex flex-column">
+                                        <!-- Header -->
+                                        <h4 class="font-weight-bold text-dark mt-2 mb-2 text-uppercase" style="letter-spacing: 1px;">{{ $plan->name }}</h4>
+                                        <p class="text-muted small mb-4 px-2" style="min-height: 40px;">{{ $plan->description }}</p>
+                                        
+                                        <!-- Price -->
+                                        <div class="mb-4">
+                                            @if($plan->price == 0 || $plan->price == '0.00')
+                                                <h1 class="font-weight-bold text-primary mb-0" style="font-size: 2.2rem;">GRATIS</h1>
+                                                <p class="text-muted small mt-2">Selamanya</p>
+                                            @else
+                                                <h1 class="font-weight-bold text-primary mb-0 d-inline-block" style="font-size: 2.2rem;">Rp {{ number_format($plan->price, 0, ',', '.') }}</h1><span class="text-muted small">/{{ $plan->duration_in_days }} Hari</span>
+                                                <p class="text-muted small mt-2">Hari</p>
                                             @endif
-                                            
-                                            <div class="card-header text-center border-bottom-0 pt-4 pb-2">
-                                                <h5 class="font-weight-bold text-dark">{{ $plan->name }}</h5>
-                                                <h2 class="text-primary font-weight-bold mb-0" style="font-size: 1.8rem;">Rp{{ number_format($plan->price, 0, ',', '.') }}</h2>
-                                                <p class="text-muted small">/ Bulan</p>
-                                            </div>
-                                            <div class="card-body pt-0 text-sm">
-                                                <div class="mb-4 text-center text-muted px-2" style="font-size: 0.85rem; line-height: 1.5;">
-                                                    {{ $plan->description }}
-                                                </div>
-                                                <div class="font-weight-bold text-dark mb-2 border-bottom pb-2"><i class="fas fa-sliders-h text-primary mr-2"></i> Kapasitas Maksimal</div>
-                                                <ul class="list-unstyled mb-3">
-                                                    <li class="mb-2 d-flex justify-content-between align-items-center">
-                                                        <span><i class="fas fa-users text-indigo mr-2"></i> User / Staf</span>
-                                                        <strong class="text-dark">{{ $plan->max_users == 0 ? 'Unlimited' : $plan->max_users }}</strong>
-                                                    </li>
-                                                    <li class="mb-2 d-flex justify-content-between align-items-center">
-                                                        <span><i class="fas fa-box text-indigo mr-2"></i> Data Barang</span>
-                                                        <strong class="text-dark">{{ $plan->max_items == 0 ? 'Unlimited' : number_format($plan->max_items, 0, ',', '.') }}</strong>
-                                                    </li>
-                                                    <li class="mb-2 d-flex justify-content-between align-items-center">
-                                                        <span><i class="fas fa-exchange-alt text-indigo mr-2"></i> Transaksi/Bln</span>
-                                                        <strong class="text-dark">{{ $plan->max_transactions_per_month == 0 ? 'Unlimited' : number_format($plan->max_transactions_per_month, 0, ',', '.') }}</strong>
-                                                    </li>
-                                                </ul>
-
-                                                <div class="font-weight-bold text-dark mb-2 mt-3 border-bottom pb-2"><i class="fas fa-layer-group text-primary mr-2"></i> Modul Terbuka</div>
-                                                <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
-                                                    @if($plan->has_sales)
-                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Point of Sales & Kasir</li>
-                                                    @else
-                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Point of Sales & Kasir</del></li>
-                                                    @endif
-
-                                                    @if($plan->has_inventory)
-                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Manajemen Gudang (Stok)</li>
-                                                    @else
-                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Manajemen Gudang</del></li>
-                                                    @endif
-
-                                                    @if($plan->has_accounting_full)
-                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Akuntansi Lengkap</li>
-                                                    @else
-                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Akuntansi Lengkap</del></li>
-                                                    @endif
-
-                                                    @if($plan->has_budgeting)
-                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Perencanaan Anggaran</li>
-                                                    @else
-                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Perencanaan Anggaran</del></li>
-                                                    @endif
-
-                                                    @if($plan->has_procurement)
-                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Pengadaan Barang (PO)</li>
-                                                    @else
-                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Pengadaan Barang</del></li>
-                                                    @endif
-
-                                                    @if($plan->has_hr)
-                                                        <li class="mb-2 text-purple font-weight-bold"><i class="fas fa-bolt text-warning mr-2"></i> SDM & Slip Gaji (Payroll)</li>
-                                                    @else
-                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>SDM & Slip Gaji</del></li>
-                                                    @endif
-
-                                                    @if($plan->has_circle_menu)
-                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Dasbor Lingkaran (Circle Menu)</li>
-                                                    @endif
-
-                                                    @if($plan->can_export)
-                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Ekspor Laporan Excel / PDF</li>
-                                                    @endif
-                                                </ul>
-                                            </div>
                                         </div>
-                                    </label>
-                                </div>
-                                @empty
-                                <div class="col-12 text-center text-muted py-4">Belum ada paket tersedia dari pusat.</div>
-                                @endforelse
-                            </div>
 
-                            @if(count($plans) > 0)
-                            <hr class="my-4">
-                            <div class="row align-items-center">
-                                <div class="col-md-7">
-                                    <div class="form-group mb-0">
-                                        <label for="promo_code" class="text-muted"><i class="fas fa-tag mr-1"></i> Punya Kode Promo?</label>
-                                        <input type="text" name="promo_code" id="promo_code" class="form-control" placeholder="Masukkan kode promo (Opsional)">
+                                        <div class="dashed-divider mb-4"></div>
+
+                                        <!-- Limits -->
+                                        <ul class="text-left list-unstyled text-muted small font-weight-bold mb-4 ml-3">
+                                            <li class="mb-3"><i class="fas fa-user-friends text-primary mr-3" style="width: 20px;"></i> {{ $plan->max_users == 0 ? 'Unlimited' : $plan->max_users }} Akun Staff</li>
+                                            <li class="mb-3"><i class="fas fa-box text-warning mr-3" style="width: 20px;"></i> {{ $plan->max_items == 0 ? 'Unlimited' : number_format($plan->max_items, 0, ',', '.') }} Item Inventory</li>
+                                            <li class="mb-3"><i class="fas fa-exchange-alt text-success mr-3" style="width: 20px;"></i> {{ $plan->max_transactions_per_month == 0 ? 'Unlimited' : number_format($plan->max_transactions_per_month, 0, ',', '.') }} Transaksi/Bln</li>
+                                        </ul>
+
+                                        <!-- Modules -->
+                                        <div class="mt-auto bg-light rounded text-left p-3 pt-4 pb-4 w-100 mx-auto" style="border: 1px solid #f0f0f0;">
+                                            <p class="font-weight-bold text-dark mb-3" style="font-size: 13px;">AKSES MODUL INTI:</p>
+                                            <ul class="list-unstyled mb-0" style="font-size: 13px; line-height: 2.2;">
+                                                <!-- Penjualan & Kasir -->
+                                                <li>
+                                                    @if($plan->has_sales)
+                                                        <i class="fas fa-check text-success mr-2 font-weight-bold"></i> <span class="text-dark">Penjualan & Kasir</span>
+                                                    @else
+                                                        <i class="fas fa-times text-danger mr-2"></i> <del class="text-muted">Penjualan & Kasir</del>
+                                                    @endif
+                                                </li>
+                                                <!-- Inventory -->
+                                                <li>
+                                                    @if($plan->has_inventory)
+                                                        <i class="fas fa-check text-success mr-2 font-weight-bold"></i> <span class="text-dark">Manajemen Stok (Inventory)</span>
+                                                    @else
+                                                        <i class="fas fa-times text-danger mr-2"></i> <del class="text-muted">Manajemen Stok (Inventory)</del>
+                                                    @endif
+                                                </li>
+                                                <!-- Procurement -->
+                                                <li>
+                                                    @if($plan->has_procurement)
+                                                        <i class="fas fa-check text-success mr-2 font-weight-bold"></i> <span class="text-dark">Pengadaan (PO) / Supplier</span>
+                                                    @else
+                                                        <i class="fas fa-times text-danger mr-2"></i> <del class="text-muted">Pengadaan (PO) / Supplier</del>
+                                                    @endif
+                                                </li>
+                                                <!-- Accounting -->
+                                                <li>
+                                                    @if($plan->has_accounting_full)
+                                                        <i class="fas fa-check text-success mr-2 font-weight-bold"></i> <span class="text-dark">Akuntansi Lengkap (Ledger)</span>
+                                                    @else
+                                                        <i class="fas fa-times text-danger mr-2"></i> <del class="text-muted">Akuntansi Lengkap (Ledger)</del>
+                                                    @endif
+                                                </li>
+                                                <!-- Budgeting -->
+                                                <li>
+                                                    @if($plan->has_budgeting)
+                                                        <i class="fas fa-check text-success mr-2 font-weight-bold"></i> <span class="text-dark">Sistem Anggaran (Budgeting)</span>
+                                                    @else
+                                                        <i class="fas fa-times text-danger mr-2"></i> <del class="text-muted">Sistem Anggaran (Budgeting)</del>
+                                                    @endif
+                                                </li>
+                                                <!-- HR -->
+                                                <li>
+                                                    @if($plan->has_hr)
+                                                        <i class="fas fa-check text-success mr-2 font-weight-bold"></i> <span class="text-dark">HR / Penggajian (Payroll)</span>
+                                                    @else
+                                                        <i class="fas fa-times text-danger mr-2"></i> <del class="text-muted">HR / Penggajian (Payroll)</del>
+                                                    @endif
+                                                </li>
+                                                <!-- Circle Menu -->
+                                                <li>
+                                                    @if($plan->has_circle_menu)
+                                                        <i class="fas fa-check text-success mr-2 font-weight-bold"></i> <span class="text-dark">Distribusi Menu Circle</span>
+                                                    @else
+                                                        <i class="fas fa-times text-danger mr-2"></i> <del class="text-muted">Distribusi Menu Circle</del>
+                                                    @endif
+                                                </li>
+                                                <!-- Export -->
+                                                <li>
+                                                    @if($plan->can_export)
+                                                        <i class="fas fa-check text-success mr-2 font-weight-bold"></i> <span class="text-dark">Export Data Excel/PDF</span>
+                                                    @else
+                                                        <i class="fas fa-times text-danger mr-2"></i> <del class="text-muted">Export Data Excel/PDF</del>
+                                                    @endif
+                                                </li>
+                                            </ul>
+                                        </div>
+
                                     </div>
                                 </div>
-                                <div class="col-md-5 text-right mt-3 mt-md-0">
-                                    <button type="submit" class="btn btn-primary btn-block btn-lg rounded-pill shadow-sm py-3" style="font-weight: 700;">
-                                        Upgrade Sekarang <i class="fas fa-rocket ml-1"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            @endif
-                        </form>
+                            </label>
+                        </div>
+                        @empty
+                        <div class="col-12 text-center text-muted py-4">Belum ada paket tersedia dari pusat.</div>
+                        @endforelse
                     </div>
-                </div>
+
+                    @if(count($plans) > 0)
+                    <div class="row align-items-center justify-content-center mt-4">
+                        <div class="col-md-5">
+                            <div class="form-group mb-0">
+                                <label for="promo_code" class="text-muted font-weight-bold"><i class="fas fa-tag mr-1"></i> Punya Kode Promo?</label>
+                                <input type="text" name="promo_code" id="promo_code" class="form-control" placeholder="Masukkan kode promo (Opsional)" style="border-radius: 8px;">
+                            </div>
+                        </div>
+                        <div class="col-md-3 mt-3 mt-md-0 pt-md-4">
+                            <button type="submit" class="btn btn-primary btn-block btn-lg shadow" style="font-weight: 700; border-radius: 8px;">
+                                Lanjutkan <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                    @endif
+                </form>
             </div>
         </div>
     </div>
@@ -300,15 +322,66 @@
 
 @push('css')
 <style>
-    .plan-radio:checked + .plan-card {
-        background-color: #f0f8ff;
-        border-color: #007bff !important;
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-        transform: translateY(-3px);
+    /* Pricing Card Styling */
+    .pricing-card {
+        border: 1px solid #eaeaea !important;
+        border-radius: 12px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        overflow: hidden;
     }
-    .plan-card:hover {
-        border-color: #b3d7ff !important;
+    .pricing-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+        border-color: #d1d5db !important;
     }
+    
+    .plan-radio:checked + .pricing-card {
+        border: 2px solid #007bff !important;
+        box-shadow: 0 10px 30px rgba(0, 123, 255, 0.15) !important;
+        transform: translateY(-5px);
+    }
+
+    /* Dashed Horizontal Divider */
+    .dashed-divider {
+        border-top: 2px dotted #e5e7eb;
+        margin-left: 10px;
+        margin-right: 10px;
+    }
+
+    /* Modul Inti Box styling */
+    .pricing-card .bg-light {
+        background-color: #f8f9fa !important;
+        border-top: 1px dotted #e5e7eb;
+    }
+
+    /* Corner Ribbon for FREE / Bestseller */
+    .corner-ribbon {
+        width: 160px;
+        background: #28a745;
+        position: absolute;
+        top: 25px;
+        left: -40px;
+        text-align: center;
+        line-height: 40px;
+        letter-spacing: 1px;
+        color: #f0f0f0;
+        font-weight: 900;
+        transform: rotate(-45deg);
+        -webkit-transform: rotate(-45deg);
+        z-index: 10;
+        text-transform: uppercase;
+        font-size: 14px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .corner-ribbon.top-right {
+        top: 20px;
+        right: -40px;
+        left: auto;
+        transform: rotate(45deg);
+        -webkit-transform: rotate(45deg);
+    }
+    .corner-ribbon.green { background: #28a745; color: white; }
+    
 </style>
 @endpush
 @endsection
