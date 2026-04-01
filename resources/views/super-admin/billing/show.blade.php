@@ -176,8 +176,8 @@
                             <h5 class="card-title font-weight-bold text-dark mb-0"><i class="fas fa-receipt text-success mr-2"></i> Bukti Pembayaran</h5>
                         </div>
                         <div class="card-body text-center">
-                            <a href="{{ $billing->payment_proof }}" target="_blank">
-                                <img src="{{ $billing->payment_proof }}" class="img-fluid rounded" style="max-height: 200px;">
+                            <a href="{{ asset('storage/' . $billing->payment_proof) }}" target="_blank">
+                                <img src="{{ asset('storage/' . $billing->payment_proof) }}" class="img-fluid rounded" style="max-height: 200px;">
                             </a>
                             <p class="text-muted mt-2 mb-0" style="font-size: 0.8rem;">Klik untuk lihat ukuran penuh</p>
                         </div>
