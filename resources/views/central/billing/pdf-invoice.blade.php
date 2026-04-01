@@ -340,9 +340,6 @@
             <div class="info-row">
                 <strong>Tenant ID:</strong> {{ $invoice->tenant_id }}<br>
                 <strong>Email:</strong> {{ $tenantEmail }}<br>
-                @if($domain)
-                    <strong>Domain:</strong> {{ $domain }}<br>
-                @endif
                 <strong>URL Dapur:</strong> {{ $tenantUrl }}
                 @if($tenant?->subscription_ends_at)
                     <br><strong>Langganan s.d.:</strong> {{ \Carbon\Carbon::parse($tenant->subscription_ends_at)->format('d M Y') }}
