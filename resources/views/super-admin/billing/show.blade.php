@@ -115,7 +115,18 @@
                         @endif
 
                         @if($billing->payment_method)
-                            <p class="text-muted"><strong>Metode Bayar:</strong> {{ $billing->payment_method }}</p>
+                            @php
+                                $pmLabels = [
+                                    'manual_transfer' => 'Transfer Bank Manual',
+                                    'bank_transfer'   => 'Transfer Bank',
+                                    'cash'            => 'Tunai',
+                                    'qris'            => 'QRIS',
+                                    'virtual_account' => 'Virtual Account',
+                                    'midtrans'        => 'Midtrans Payment Gateway',
+                                ];
+                                $pmDisplay = $pmLabels[$billing->payment_method] ?? ucwords(str_replace('_', ' ', $billing->payment_method));
+                            @endphp
+                            <p class="text-muted"><i class="fas fa-credit-card mr-1"></i><strong>Metode Bayar:</strong> {{ $pmDisplay }}</p>
                         @endif
                     </div>
                     <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
@@ -148,26 +159,68 @@
                     <div class="card-body pb-2">
                         <div class="timeline timeline-inverse">
                             <div class="time-label"><span class="bg-primary">Invoice</span></div>
+
+                            {{-- STEP 1: Invoice Diterbitkan --}}
                             <div>
                                 <i class="fas fa-file-invoice bg-info"></i>
                                 <div class="timeline-item">
-                                    <span class="time"><i class="fas fa-clock"></i> {{ $billing->created_at->format('d M Y') }}</span>
+                                    <span class="time"><i class="fas fa-clock"></i> {{ $billing->created_at->format('d M Y, H:i') }}</span>
                                     <h3 class="timeline-header">Invoice Diterbitkan</h3>
+                                    <div class="timeline-body text-muted" style="font-size:0.8rem;">Jatuh tempo: {{ $billing->due_date ? $billing->due_date->format('d M Y') : '-' }}</div>
                                 </div>
                             </div>
+
+                            {{-- STEP 2: Bukti Dikirim (jika ada) --}}
+                            @if($billing->payment_proof && $billing->status === 'pending')
+                            <div>
+                                <i class="fas fa-upload bg-warning"></i>
+                                <div class="timeline-item">
+                                    <span class="time"><i class="fas fa-clock"></i> —</span>
+                                    <h3 class="timeline-header">Bukti Bayar Dikirim</h3>
+                                    <div class="timeline-body text-muted" style="font-size:0.8rem;">Menunggu verifikasi admin</div>
+                                </div>
+                            </div>
+                            @endif
+
+                            {{-- STEP 3: Pembayaran Diterima --}}
                             @if($billing->paid_at)
-                                <div>
-                                    <i class="fas fa-check bg-success"></i>
-                                    <div class="timeline-item">
-                                        <span class="time"><i class="fas fa-clock"></i> {{ $billing->paid_at->format('d M Y, H:i') }}</span>
-                                        <h3 class="timeline-header">Pembayaran Diterima</h3>
-                                        @if($billing->payment_method)
-                                            <div class="timeline-body">via {{ $billing->payment_method }}</div>
+                            <div>
+                                <i class="fas fa-check bg-success"></i>
+                                <div class="timeline-item">
+                                    <span class="time"><i class="fas fa-clock"></i> {{ $billing->paid_at->format('d M Y, H:i') }}</span>
+                                    <h3 class="timeline-header text-success">Pembayaran Terverifikasi</h3>
+                                    @if($billing->payment_method)
+                                    @php
+                                        $pmLabels = [
+                                            'manual_transfer' => 'Transfer Bank Manual',
+                                            'bank_transfer'   => 'Transfer Bank',
+                                            'cash'            => 'Tunai', 'qris' => 'QRIS',
+                                            'virtual_account' => 'Virtual Account'
+                                        ];
+                                        $pm = $pmLabels[$billing->payment_method] ?? ucwords(str_replace('_',' ',$billing->payment_method));
+                                    @endphp
+                                    <div class="timeline-body">via {{ $pm }}</div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- STEP 4: Paket Aktif --}}
+                            <div>
+                                <i class="fas fa-box-open bg-primary"></i>
+                                <div class="timeline-item">
+                                    <span class="time"><i class="fas fa-clock"></i> {{ $billing->paid_at->format('d M Y, H:i') }}</span>
+                                    <h3 class="timeline-header text-primary">Paket Berhasil Diaktifkan</h3>
+                                    <div class="timeline-body text-muted" style="font-size:0.8rem;">
+                                        {{ $billing->subscriptionPlan->name ?? 'Paket' }} aktif
+                                        @if($billing->tenant && $billing->tenant->subscription_ends_at)
+                                            s.d. {{ \Carbon\Carbon::parse($billing->tenant->subscription_ends_at)->format('d M Y') }}
                                         @endif
                                     </div>
                                 </div>
+                            </div>
                             @endif
-                            <div><i class="fas fa-clock bg-gray"></i></div>
+
+                            <div><i class="fas fa-circle bg-gray"></i></div>
                         </div>
                     </div>
                 </div>

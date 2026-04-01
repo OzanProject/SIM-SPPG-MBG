@@ -216,14 +216,30 @@
                         <h4 class="text-white font-weight-bold mb-0">LUNAS</h4>
                     </div>
                     <div class="card-body p-4">
-                        <p class="text-muted">Terima kasih atas pembayarannya. Langganan Anda telah diperpanjang dan status website AKTIF.</p>
+                        <p class="text-muted">Terima kasih atas pembayarannya. Langganan Anda telah diperpanjang dan status Dapur <strong>AKTIF</strong>.</p>
                         <hr>
+                        @php
+                            $pmLabels = [
+                                'manual_transfer' => 'Transfer Bank Manual',
+                                'bank_transfer'   => 'Transfer Bank',
+                                'cash'            => 'Tunai',
+                                'qris'            => 'QRIS',
+                                'virtual_account' => 'Virtual Account',
+                                'midtrans'        => 'Midtrans',
+                            ];
+                            $rawPm = $invoice->payment_method;
+                            $pmDisplay = $rawPm ? ($pmLabels[$rawPm] ?? ucwords(str_replace('_', ' ', $rawPm))) : 'Transfer Bank';
+                        @endphp
                         <div class="text-left small mb-3">
-                            <span class="text-muted">Metode:</span> <strong class="text-dark">{{ $invoice->payment_method ?: 'Transfer Bank' }}</strong><br>
-                            <span class="text-muted">Waktu:</span> <strong class="text-dark">{{ $invoice->paid_at->format('d M Y, H:i') }}</strong>
+                            <span class="text-muted">Metode:</span> <strong class="text-dark">{{ $pmDisplay }}</strong><br>
+                            <span class="text-muted">Waktu Verifikasi:</span> <strong class="text-dark">{{ $invoice->paid_at->format('d M Y, H:i') }}</strong><br>
+                            @if($invoice->subscriptionPlan)
+                            <span class="text-muted">Paket Aktif:</span> <strong class="text-primary">{{ $invoice->subscriptionPlan->name }}
+                                ({{ $invoice->subscriptionPlan->duration_in_days }} hari)</strong>
+                            @endif
                         </div>
                         <a href="{{ route('tenant.billing.index') }}" class="btn btn-success btn-block rounded-pill shadow-sm">
-                            Atur Paket Lain <i class="fas fa-box-open ml-2"></i>
+                            Lihat Status Langganan <i class="fas fa-box-open ml-2"></i>
                         </a>
                     </div>
                 </div>
