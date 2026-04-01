@@ -16,7 +16,7 @@ Route::prefix('/{tenant}')->middleware([
     'tenant.init',
 ])->group(function () {
     Route::get('/', function () {
-        return redirect()->route('tenant.login', ['tenant' => tenant('id')]);
+        return redirect()->route('login');
     });
 
     // ── Halaman Pembayaran Pending ──

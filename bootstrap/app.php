@@ -32,11 +32,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.init'         => \App\Http\Middleware\TenantMiddleware::class,
         ]);
 
-        // Guest users redirect ke /login (untuk central) atau /{tenant}/login (untuk tenant)
+        // Guest users selalu redirect ke Global Login
         $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request) {
-            if (tenant()) {
-                return route('tenant.login', ['tenant' => tenant('id')]);
-            }
             return route('login');
         });
 

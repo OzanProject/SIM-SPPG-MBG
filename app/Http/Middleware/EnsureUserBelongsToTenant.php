@@ -35,15 +35,27 @@ class EnsureUserBelongsToTenant
             if ($userCentral->tenant_id === $currentTenant->id || in_array($userCentral->role, ['super-admin', 'superadmin'])) {
                 
                 // BRIDGE: Login otomatis ke Guard Tenant (Database SQLite Dapur)
-                // Cari user di SQLite berdasarkan email yang sama
                 $userTenant = \App\Models\Tenant\User::where('email', $userCentral->email)->first();
                 
+                if (!$userTenant && $userCentral->tenant_id === $currentTenant->id) {
+                    // AUTO PROVISIONING: Jika tidak ada di Tenant DB (mungkin karena error sebelumnya), 
+                    // buatin otomatis agar nggak error 'akun salah'
+                    $userTenant = \App\Models\Tenant\User::create([
+                        'name'     => $userCentral->name,
+                        'email'    => $userCentral->email,
+                        'password' => $userCentral->password, // Gunakan hash password yang sama
+                        'whatsapp' => $userCentral->whatsapp,
+                        'role'     => 'admin',
+                    ]);
+                    \Illuminate\Support\Facades\Log::info("AUTH_BRIDGE | Auto-Provisioned Tenant User: " . $userCentral->email);
+                }
+
                 if ($userTenant) {
                     \Illuminate\Support\Facades\Log::info("AUTH_BRIDGE | Auto-login to Tenant: " . $currentTenant->id . " | User: " . $userTenant->email);
                     auth('tenant')->login($userTenant);
                     return $next($request);
                 } else {
-                    \Illuminate\Support\Facades\Log::error("AUTH_BRIDGE | User Central found but NOT in Tenant DB: " . $userCentral->email);
+                    \Illuminate\Support\Facades\Log::error("AUTH_BRIDGE | Auto-provisioning failed for: " . $userCentral->email);
                 }
             }
         }

@@ -41,7 +41,7 @@
         @endif
 
         <div class="glass-card rounded-3xl p-8 border border-white/10 shadow-2xl relative overflow-hidden">
-            <form id="loginForm" method="POST" action="{{ tenant() ? route('tenant.login', ['tenant' => tenant('id')]) : route('login') }}" class="space-y-6">
+            <form id="loginForm" method="POST" action="{{ route('login') }}" class="space-y-6">
                 @csrf
                 
                 <div>
@@ -63,7 +63,7 @@
                     <div class="flex justify-between items-center mb-2">
                         <label class="block text-sm font-bold text-slate-300">Kata Sandi</label>
                         @if (Route::has('password.request'))
-                            <a href="{{ tenant() ? route('tenant.password.request', ['tenant' => tenant('id')]) : route('password.request') }}" class="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors">Lupa Password?</a>
+                            <a href="{{ route('password.request') }}" class="text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors">Lupa Password?</a>
                         @endif
                     </div>
                     <div class="relative group">
