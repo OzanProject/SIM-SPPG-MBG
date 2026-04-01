@@ -200,26 +200,69 @@
                                                 <p class="text-muted small">/ Bulan</p>
                                             </div>
                                             <div class="card-body pt-0 text-sm">
-                                                <div class="mb-3 text-center text-muted px-2" style="font-size: 0.8rem; line-height: 1.4;">
+                                                <div class="mb-4 text-center text-muted px-2" style="font-size: 0.85rem; line-height: 1.5;">
                                                     {{ $plan->description }}
                                                 </div>
-                                                <ul class="list-unstyled mb-0">
-                                                    <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> <strong>{{ $plan->max_transactions_per_month == 0 ? 'Unlimited' : $plan->max_transactions_per_month }}</strong> Transaksi</li>
-                                                    <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> <strong>{{ $plan->max_items == 0 ? 'Unlimited' : $plan->max_items }}</strong> Barang</li>
-                                                    <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> <strong>{{ $plan->max_users }}</strong> User Terdaftar</li>
-                                                    
+                                                <div class="font-weight-bold text-dark mb-2 border-bottom pb-2"><i class="fas fa-sliders-h text-primary mr-2"></i> Kapasitas Maksimal</div>
+                                                <ul class="list-unstyled mb-3">
+                                                    <li class="mb-2 d-flex justify-content-between align-items-center">
+                                                        <span><i class="fas fa-users text-indigo mr-2"></i> User / Staf</span>
+                                                        <strong class="text-dark">{{ $plan->max_users == 0 ? 'Unlimited' : $plan->max_users }}</strong>
+                                                    </li>
+                                                    <li class="mb-2 d-flex justify-content-between align-items-center">
+                                                        <span><i class="fas fa-box text-indigo mr-2"></i> Data Barang</span>
+                                                        <strong class="text-dark">{{ $plan->max_items == 0 ? 'Unlimited' : number_format($plan->max_items, 0, ',', '.') }}</strong>
+                                                    </li>
+                                                    <li class="mb-2 d-flex justify-content-between align-items-center">
+                                                        <span><i class="fas fa-exchange-alt text-indigo mr-2"></i> Transaksi/Bln</span>
+                                                        <strong class="text-dark">{{ $plan->max_transactions_per_month == 0 ? 'Unlimited' : number_format($plan->max_transactions_per_month, 0, ',', '.') }}</strong>
+                                                    </li>
+                                                </ul>
+
+                                                <div class="font-weight-bold text-dark mb-2 mt-3 border-bottom pb-2"><i class="fas fa-layer-group text-primary mr-2"></i> Modul Terbuka</div>
+                                                <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
                                                     @if($plan->has_sales)
-                                                        <li class="mb-2 text-primary font-weight-bold"><i class="fas fa-star text-warning mr-2"></i> Modul Penjualan PIN</li>
+                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Point of Sales & Kasir</li>
                                                     @else
-                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Modul Penjualan</del></li>
+                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Point of Sales & Kasir</del></li>
+                                                    @endif
+
+                                                    @if($plan->has_inventory)
+                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Manajemen Gudang (Stok)</li>
+                                                    @else
+                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Manajemen Gudang</del></li>
+                                                    @endif
+
+                                                    @if($plan->has_accounting_full)
+                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Akuntansi Lengkap</li>
+                                                    @else
+                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Akuntansi Lengkap</del></li>
+                                                    @endif
+
+                                                    @if($plan->has_budgeting)
+                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Perencanaan Anggaran</li>
+                                                    @else
+                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Perencanaan Anggaran</del></li>
+                                                    @endif
+
+                                                    @if($plan->has_procurement)
+                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Pengadaan Barang (PO)</li>
+                                                    @else
+                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>Pengadaan Barang</del></li>
+                                                    @endif
+
+                                                    @if($plan->has_hr)
+                                                        <li class="mb-2 text-purple font-weight-bold"><i class="fas fa-bolt text-warning mr-2"></i> SDM & Slip Gaji (Payroll)</li>
+                                                    @else
+                                                        <li class="mb-2 text-muted"><i class="fas fa-lock mr-2 opacity-50"></i> <del>SDM & Slip Gaji</del></li>
+                                                    @endif
+
+                                                    @if($plan->has_circle_menu)
+                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Dasbor Lingkaran (Circle Menu)</li>
                                                     @endif
 
                                                     @if($plan->can_export)
-                                                        <li class="mb-2"><i class="fas fa-check-circle text-success mr-2"></i> Export Excel/PDF</li>
-                                                    @endif
-                                                    
-                                                    @if($plan->has_hr)
-                                                        <li class="mb-2 text-purple font-weight-bold"><i class="fas fa-bolt text-warning mr-2"></i> SDM & Payroll</li>
+                                                        <li class="mb-2 text-dark"><i class="fas fa-check-circle text-success mr-2"></i> Ekspor Laporan Excel / PDF</li>
                                                     @endif
                                                 </ul>
                                             </div>
