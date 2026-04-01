@@ -199,7 +199,7 @@
                             <small>Menunggu verifikasi admin pusat (Estimasi < 24 Jam)</small>
                         </div>
                         <div class="mt-3">
-                            <a href="{{ asset('storage/' . $invoice->payment_proof) }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill">
+                            <a href="{{ asset('storage/' . ltrim(str_replace(['/storage/', 'storage/'], '', $invoice->payment_proof), '/')) }}" target="_blank" class="btn btn-sm btn-outline-info rounded-pill">
                                 <i class="fas fa-search-plus mr-1"></i> Lihat Bukti Saya
                             </a>
                         </div>
@@ -232,8 +232,8 @@
                 <div class="card border-0 shadow-sm mt-3" style="border-radius:15px;">
                     <div class="card-body p-3 text-center">
                         <p class="small text-muted mb-2">Histori Bukti Pembayaran:</p>
-                        <a href="{{ asset('storage/' . $invoice->payment_proof) }}" target="_blank">
-                             <img src="{{ asset('storage/' . $invoice->payment_proof) }}" class="img-fluid rounded border shadow-inner" style="max-height: 100px;">
+                        <a href="{{ asset('storage/' . ltrim(str_replace(['/storage/', 'storage/'], '', $invoice->payment_proof), '/')) }}" target="_blank">
+                             <img src="{{ asset('storage/' . ltrim(str_replace(['/storage/', 'storage/'], '', $invoice->payment_proof), '/')) }}" class="img-fluid rounded border shadow-inner" style="max-height: 100px;">
                         </a>
                     </div>
                 </div>
