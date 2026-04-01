@@ -59,10 +59,10 @@ class PaymentPendingController extends Controller
             Storage::disk('public')->delete($oldPath);
         }
 
-        // Simpan bukti baru
-        $path = $request->file('payment_proof')->store('payment-proofs', 'public');
+        // Simpan bukti baru ke disk central agar tersentralisasi
+        $path = $request->file('payment_proof')->store('payment-proofs', 'central');
         $invoice->update([
-            'payment_proof' => '/storage/' . $path,
+            'payment_proof' => $path,
         ]);
 
         return redirect('/'. tenant('id') . '/payment/pending')
