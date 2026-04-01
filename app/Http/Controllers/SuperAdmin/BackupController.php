@@ -45,18 +45,16 @@ class BackupController extends Controller
     public function create()
     {
         try {
-            // Pengaturan DB
             $dbName = config('database.connections.mysql.database');
             $dbUser = config('database.connections.mysql.username');
             $dbHost = config('database.connections.mysql.host');
             $dbPass = config('database.connections.mysql.password');
             $dbPort = config('database.connections.mysql.port', '3306');
-            
-            $timestamp = Carbon::now()->format('Y-m-d-H-i-s');
+
+            $timestamp   = Carbon::now()->format('Y-m-d-H-i-s');
             $sqlFilename = "db-backup-{$timestamp}.sql";
             $zipFilename = "backup-{$timestamp}.zip";
-            
-            // Gunakan disk local untuk manajemen path agar konsisten
+
             if (!Storage::disk('local')->exists('backups')) {
                 Storage::disk('local')->makeDirectory('backups');
             }
@@ -64,47 +62,52 @@ class BackupController extends Controller
             $sqlPath = Storage::disk('local')->path('backups/' . $sqlFilename);
             $zipPath = Storage::disk('local')->path('backups/' . $zipFilename);
 
-            // 1. Eksekusi mysqldump
-            $passwordPart = $dbPass ? "-p\"$dbPass\"" : "";
-            
-            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-                $command = "mysqldump -h $dbHost -P $dbPort -u $dbUser $passwordPart $dbName > \"$sqlPath\"";
-            } else {
-                $command = "mysqldump -h $dbHost -P $dbPort -u $dbUser $passwordPart $dbName > '$sqlPath' 2>&1";
+            // === Deteksi binary: utamakan mariadb-dump, fallback ke mysqldump ===
+            $dumpBin = $this->findBinary(['mariadb-dump', 'mysqldump']);
+            if (!$dumpBin) {
+                throw new \Exception('Binary mysqldump / mariadb-dump tidak ditemukan di server.');
             }
 
-            exec($command, $output, $returnVar);
+            // Bangun perintah dump — stderr dibuang ke /dev/null agar warning tidak masuk ke file SQL
+            $passPart = $dbPass ? "-p" . escapeshellarg($dbPass) : '';
+            $cmd = sprintf(
+                '%s -h %s -P %s -u %s %s %s > %s 2>/dev/null',
+                escapeshellcmd($dumpBin),
+                escapeshellarg($dbHost),
+                escapeshellarg($dbPort),
+                escapeshellarg($dbUser),
+                $passPart,
+                escapeshellarg($dbName),
+                escapeshellarg($sqlPath)
+            );
 
-            if ($returnVar !== 0 || !file_exists($sqlPath) || filesize($sqlPath) === 0) {
-                $errorMsg = "Gagal dump database. ";
-                if (!empty($output)) {
-                    $errorMsg .= implode("\n", $output);
-                } else {
-                    $errorMsg .= "Pastikan mysqldump terinstall dan ada di dalam PATH.";
-                }
-                throw new \Exception($errorMsg);
+            exec($cmd, $cmdOut, $retCode);
+
+            // Jika masih gagal atau file kosong, coba sekali lagi tanpa escapeshellcmd
+            if ($retCode !== 0 || !file_exists($sqlPath) || filesize($sqlPath) === 0) {
+                throw new \Exception('Gagal membuat dump database. Exit code: ' . $retCode);
             }
 
-            // 2. Zip file SQL dan Folder Uploads
+            // === Bersihkan warning MariaDB dari hasil dump ===
+            $this->stripMariadbWarnings($sqlPath);
+
+            // === Zip SQL + folder uploads ===
             $zip = new \ZipArchive();
-            if ($zip->open($zipPath, \ZipArchive::CREATE) === TRUE) {
-                $zip->addFile($sqlPath, $sqlFilename);
-                
-                $publicStorage = storage_path('app/public');
-                if (file_exists($publicStorage)) {
-                    $this->addFolderToZip($publicStorage, $zip, 'files');
-                }
-                
-                $zip->close();
-                @unlink($sqlPath);
-            } else {
-                throw new \Exception("Gagal membuat file ZIP.");
+            if ($zip->open($zipPath, \ZipArchive::CREATE) !== TRUE) {
+                throw new \Exception('Gagal membuat file ZIP.');
             }
+            $zip->addFile($sqlPath, $sqlFilename);
+            $publicStorage = storage_path('app/public');
+            if (is_dir($publicStorage)) {
+                $this->addFolderToZip($publicStorage, $zip, 'files');
+            }
+            $zip->close();
+            @unlink($sqlPath);
 
-            return redirect()->back()->with('success', 'Backup database & file berhasil dibuat: ' . $zipFilename);
-            
+            return redirect()->back()->with('success', "Backup berhasil dibuat: {$zipFilename}");
+
         } catch (\Exception $e) {
-            \Log::error("Backup Error: " . $e->getMessage());
+            \Log::error('Backup Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Gagal backup: ' . $e->getMessage());
         }
     }
@@ -147,30 +150,29 @@ class BackupController extends Controller
     public function restore($filename)
     {
         try {
-            // Pengaturan DB
             $dbName = config('database.connections.mysql.database');
             $dbUser = config('database.connections.mysql.username');
             $dbHost = config('database.connections.mysql.host');
             $dbPass = config('database.connections.mysql.password');
             $dbPort = config('database.connections.mysql.port', '3306');
-            
+
             if (!Storage::disk('local')->exists('backups/' . $filename)) {
-                throw new \Exception("File backup tidak ditemukan di disk local.");
+                throw new \Exception('File backup tidak ditemukan.');
             }
 
             $zipPath = Storage::disk('local')->path('backups/' . $filename);
             $backupDir = dirname($zipPath);
 
-
-            // 1. Ekstrak file SQL dari ZIP
+            // 1. Ekstrak SQL dari ZIP
             $zip = new \ZipArchive();
             $sqlFilename = null;
             if ($zip->open($zipPath) === TRUE) {
                 for ($i = 0; $i < $zip->numFiles; $i++) {
                     $entryName = $zip->getNameIndex($i);
                     if (str_ends_with($entryName, '.sql')) {
-                        $sqlFilename = $entryName;
-                        $zip->extractTo($backupDir, $entryName);
+                        $sqlFilename = basename($entryName);
+                        // Ekstrak ke folder backups (bukan subdir)
+                        copy("zip://{$zipPath}#{$entryName}", $backupDir . '/' . $sqlFilename);
                         break;
                     }
                 }
@@ -178,33 +180,47 @@ class BackupController extends Controller
             }
 
             if (!$sqlFilename) {
-                throw new \Exception("File SQL tidak ditemukan di dalam paket ZIP.");
+                throw new \Exception('File SQL tidak ditemukan di dalam paket ZIP.');
             }
 
             $sqlPath = $backupDir . DIRECTORY_SEPARATOR . $sqlFilename;
 
-            // 2. Eksekusi Restore
-            $passwordPart = $dbPass ? "-p\"$dbPass\"" : "";
-            
-            if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-                $command = "mysql -h $dbHost -P $dbPort -u $dbUser $passwordPart $dbName < \"$sqlPath\"";
-            } else {
-                $command = "mysql -h $dbHost -P $dbPort -u $dbUser $passwordPart $dbName < '$sqlPath' 2>&1";
+            // 2. Bersihkan warning lines dari MariaDB/mysqldump sebelum restore
+            $this->stripMariadbWarnings($sqlPath);
+
+            // 3. Deteksi binary restore: utamakan mariadb, fallback ke mysql
+            $mysqlBin = $this->findBinary(['mariadb', 'mysql']);
+            if (!$mysqlBin) {
+                throw new \Exception('Binary mysql / mariadb tidak ditemukan di server.');
             }
 
-            exec($command, $output, $returnVar);
+            $passPart = $dbPass ? '-p' . escapeshellarg($dbPass) : '';
+            $cmd = sprintf(
+                '%s -h %s -P %s -u %s %s %s < %s 2>&1',
+                escapeshellcmd($mysqlBin),
+                escapeshellarg($dbHost),
+                escapeshellarg($dbPort),
+                escapeshellarg($dbUser),
+                $passPart,
+                escapeshellarg($dbName),
+                escapeshellarg($sqlPath)
+            );
 
-            // Hapus file SQL hasil ekstrak
+            exec($cmd, $output, $retCode);
             @unlink($sqlPath);
 
-            if ($returnVar !== 0) {
-                throw new \Exception("Gagal restore. Pesan: " . (isset($output[0]) ? implode("\n", $output) : 'Unknown error'));
+            if ($retCode !== 0) {
+                // Filter out warning-only outputs (non-fatal)
+                $errors = array_filter($output, fn($l) => stripos($l, 'Warning') === false && stripos($l, 'Deprecated') === false && trim($l) !== '');
+                if (!empty($errors)) {
+                    throw new \Exception('Restore gagal: ' . implode("\n", $errors));
+                }
             }
 
             return redirect()->back()->with('success', 'Database berhasil dipulihkan dari: ' . $filename);
 
         } catch (\Exception $e) {
-            \Log::error("Restore Error: " . $e->getMessage());
+            \Log::error('Restore Error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Restore gagal: ' . $e->getMessage());
         }
     }
@@ -217,5 +233,62 @@ class BackupController extends Controller
             $bytes /= 1024;
         }
         return round($bytes, 2) . ' ' . $units[$i];
+    }
+
+    /**
+     * Cari binary yang tersedia dari daftar kandidat.
+     * Kembalikan path lengkap atau false jika tidak ada.
+     */
+    private function findBinary(array $candidates): string|false
+    {
+        // Lokasi umum di cPanel/VPS/shared hosting
+        $searchPaths = [
+            '/usr/bin',
+            '/usr/local/bin',
+            '/usr/local/mariadb/bin',
+            '/opt/plesk/mariadb/bin',
+        ];
+
+        foreach ($candidates as $bin) {
+            // Cek apakah ada di PATH dengan which
+            $which = trim(shell_exec("which {$bin} 2>/dev/null") ?? '');
+            if ($which && file_exists($which)) {
+                return $which;
+            }
+            // Fallback: cari manual di folder umum
+            foreach ($searchPaths as $dir) {
+                $full = $dir . '/' . $bin;
+                if (file_exists($full) && is_executable($full)) {
+                    return $full;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Hapus baris-baris warning/deprecation dari MariaDB/mysqldump
+     * agar file SQL bersih dan siap di-restore.
+     */
+    private function stripMariadbWarnings(string $filePath): void
+    {
+        if (!file_exists($filePath)) return;
+
+        $lines   = file($filePath, FILE_IGNORE_NEW_LINES);
+        $cleaned = [];
+
+        foreach ($lines as $line) {
+            // Buang baris yang mengandung warning dari mariadb-dump/mysqldump
+            if (preg_match('/^(mysqldump|mariadb-dump|mysql|mariadb):\s*(Deprecated|Warning)/i', $line)) {
+                continue;
+            }
+            // Buang baris "/*M!999999 enable the sandbox mode */" yang menyebabkan error syntax
+            if (preg_match('/\/\*M!999999\s+enable the sandbox mode\s*\*\//', $line)) {
+                continue;
+            }
+            $cleaned[] = $line;
+        }
+
+        file_put_contents($filePath, implode("\n", $cleaned));
     }
 }
