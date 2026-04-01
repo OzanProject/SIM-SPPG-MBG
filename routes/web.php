@@ -98,3 +98,12 @@ require __DIR__.'/auth.php';
 
 // [PRO-GUIDELINE] Muat Rute Tenant di tingkat root agar InitializeTenancyByPath dapat bekerja dengan benar
 require __DIR__.'/tenant.php';
+
+// Route Fallback untuk Storage (Bypass cPanel Symlink Issues)
+Route::get('/storage/payment-proofs/{filename}', function ($filename) {
+    $path = storage_path('app/public/payment-proofs/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+})->name('storage.payment-proofs');
