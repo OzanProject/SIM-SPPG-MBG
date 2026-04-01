@@ -289,7 +289,7 @@
     $tenant        = $invoice->tenant;
     $plan          = $invoice->subscriptionPlan;
     $domain        = $tenant?->domains?->first()?->domain;
-    $tenantUrl     = $domain ? 'https://' . $domain : url('/' . $invoice->tenant_id . '/dashboard');
+    $tenantUrl     = rtrim(config('app.url'), '/') . '/' . $invoice->tenant_id . '/dashboard';
     $tenantName    = $tenant?->name ?? $invoice->tenant_id;
     $tenantEmail   = $tenant?->email ?? '-';
 
