@@ -40,7 +40,7 @@ return [
     'guards' => [
         'web' => [
             'driver' => 'session',
-            'provider' => 'central_users',
+            'provider' => 'users',
         ],
 
         'tenant' => [
@@ -67,7 +67,7 @@ return [
     */
 
     'providers' => [
-        'central_users' => [
+        'users' => [
             'driver' => 'eloquent',
             'model' => \App\Models\Central\User::class,
         ],

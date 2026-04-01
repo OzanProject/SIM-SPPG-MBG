@@ -16,7 +16,7 @@ Route::prefix('/{tenant}')->where(['tenant' => '^mbg-.*$'])->middleware([
     'tenant.init',
 ])->group(function () {
     Route::get('/', function () {
-        return redirect()->route('login');
+        return redirect()->route('tenant.login', ['tenant' => tenant('id')]);
     });
 
     // ── Halaman Pembayaran Pending ──

@@ -33,9 +33,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         // Guest users redirect ke /login (untuk central) atau /{tenant}/login (untuk tenant)
+        $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request) {
+            if (tenant()) {
+                return route('tenant.login', ['tenant' => tenant('id')]);
+            }
+            return route('login');
+        });
+
+        // Redirect users yang sudah login tapi maksa buka halaman login
         $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request) {
-            if ($user = $request->user()) {
-                // Sangat sederhana: kembalikan ke dapor masing-masing
+            $user = tenant() ? auth('tenant')->user() : auth('web')->user();
+            if ($user) {
                 if ($user->tenant_id) {
                     return "/{$user->tenant_id}/dashboard";
                 }
