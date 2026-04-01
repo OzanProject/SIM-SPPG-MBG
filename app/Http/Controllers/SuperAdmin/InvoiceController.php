@@ -16,14 +16,16 @@ class InvoiceController extends Controller
     // ─── DOWNLOAD PDF ────────────────────────────────────────
     public function download(Invoice $billing)
     {
-        $billing->load(['tenant', 'subscriptionPlan', 'promoCode']);
+        $billing->load(['tenant.domains', 'subscriptionPlan', 'promoCode']);
         
         $terbilang = $this->terbilang($billing->final_amount);
+        $appConfig = \App\Models\AppConfig::all();
         
         $pdf = Pdf::loadView('central.billing.pdf-invoice', [
-            'invoice' => $billing,
-            'terbilang' => $terbilang
-        ]);
+            'invoice'   => $billing,
+            'terbilang' => $terbilang,
+            'appConfig' => $appConfig,
+        ])->setPaper('a4', 'portrait');
 
         return $pdf->download('Invoice-' . $billing->invoice_number . '.pdf');
     }

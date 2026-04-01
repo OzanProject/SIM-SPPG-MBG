@@ -15,18 +15,21 @@ class BillingController extends Controller
     {
         $tenantId = tenant('id');
         $data = tenancy()->central(function () use ($id, $tenantId) {
-            $inv = Invoice::with(['tenant', 'subscriptionPlan', 'promoCode'])
+            $inv = Invoice::with(['tenant.domains', 'subscriptionPlan', 'promoCode'])
                 ->where('id', $id)
                 ->where('tenant_id', $tenantId)
                 ->firstOrFail();
             
+            $appConfig = \App\Models\AppConfig::all();
+
             return [
-                'invoice' => $inv,
-                'terbilang' => $this->terbilang($inv->final_amount)
+                'invoice'   => $inv,
+                'terbilang' => $this->terbilang($inv->final_amount),
+                'appConfig' => $appConfig,
             ];
         });
 
-        $pdf = Pdf::loadView('central.billing.pdf-invoice', $data);
+        $pdf = Pdf::loadView('central.billing.pdf-invoice', $data)->setPaper('a4', 'portrait');
 
         return $pdf->download('Invoice-' . $data['invoice']->invoice_number . '.pdf');
     }
