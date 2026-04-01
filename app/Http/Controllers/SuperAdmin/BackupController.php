@@ -131,11 +131,23 @@ class BackupController extends Controller
 
     public function download($filename)
     {
-        $path = storage_path('app/backups/' . $filename);
-        if (file_exists($path)) {
-            return response()->download($path);
+        // Gunakan path yang konsisten dengan cara file disimpan
+        $path = Storage::disk('local')->path('backups/' . $filename);
+
+        if (!file_exists($path)) {
+            // Fallback: coba path alternatif
+            $path = storage_path('app/backups/' . $filename);
         }
-        return redirect()->back()->with('error', 'File tidak ditemukan.');
+
+        if (!file_exists($path)) {
+            \Log::warning("Backup download: file tidak ditemukan di {$path}");
+            return redirect()->back()->with('error', 'File tidak ditemukan: ' . $filename);
+        }
+
+        return response()->download($path, $filename, [
+            'Content-Type'        => 'application/zip',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
     public function destroy($filename)

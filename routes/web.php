@@ -88,9 +88,9 @@ Route::middleware(['web', 'auth', 'role:Super Admin'])->group(function () {
     // Route Database Backup
     Route::get('/super-admin/backups', [BackupController::class, 'index'])->name('backups.index');
     Route::post('/super-admin/backups/create', [BackupController::class, 'create'])->name('backups.create');
-    Route::get('/super-admin/backups/download/{filename}', [BackupController::class, 'download'])->name('backups.download');
-    Route::delete('/super-admin/backups/delete/{filename}', [BackupController::class, 'destroy'])->name('backups.destroy');
-    Route::post('/super-admin/backups/restore/{filename}', [BackupController::class, 'restore'])->name('backups.restore');
+    Route::get('/super-admin/backups/download/{filename}', [BackupController::class, 'download'])->where('filename', '.*')->name('backups.download');
+    Route::delete('/super-admin/backups/delete/{filename}', [BackupController::class, 'destroy'])->where('filename', '.*')->name('backups.destroy');
+    Route::post('/super-admin/backups/restore/{filename}', [BackupController::class, 'restore'])->where('filename', '.*')->name('backups.restore');
 });
 
 // Rute autentikasi sentral (Untuk manajemen SaaS)
