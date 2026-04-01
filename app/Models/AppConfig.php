@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Cache;
 class AppConfig extends Model
 {
     use \App\Traits\Auditable;
+    protected $connection = 'central';
 
     protected $fillable = ['key', 'value', 'group', 'label', 'type'];
 
