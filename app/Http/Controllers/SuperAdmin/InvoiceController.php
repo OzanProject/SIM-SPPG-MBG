@@ -210,6 +210,8 @@ class InvoiceController extends Controller
     // ─── MARK PAID (Quick Action) ─────────────────────────────
     public function markPaid(Invoice $billing)
     {
+        $billing->load('subscriptionPlan');
+        
         $billing->update([
             'status'  => 'paid',
             'paid_at' => now(),
@@ -220,30 +222,45 @@ class InvoiceController extends Controller
         return redirect()->back()->with('success', "Invoice #{$billing->invoice_number} telah ditandai Lunas dan Paket Berhasil Diperpanjang.");
     }
 
-    // ─── HELPER METHDO ────────────────────────────────────────
+    // ─── HELPER METHOD ────────────────────────────────────────
     private function syncTenantSubscription(Invoice $invoice)
     {
         $tenant = Tenant::find($invoice->tenant_id);
-        if ($tenant) {
-            $plan = $invoice->subscriptionPlan;
-            if ($plan) {
-                // Tentukan tanggal kadaluarsa baru:
-                $currentEndsAt = $tenant->subscription_ends_at ? \Carbon\Carbon::parse($tenant->subscription_ends_at) : now();
-                $baseDate = $currentEndsAt->isFuture() ? $currentEndsAt : now();
-                $newEndsAt = $baseDate->addDays($plan->duration_in_days);
+        if (!$tenant) return;
+        
+        // Load relation jika belum
+        $plan = $invoice->relationLoaded('subscriptionPlan')
+            ? $invoice->subscriptionPlan
+            : $invoice->subscriptionPlan()->first();
 
-                $tenant->plan_id = $plan->id;
-                $tenant->plan_slug = $plan->slug; // PENTING: Untuk deteksi fitur Premium di UI
-                $tenant->subscription_ends_at = $newEndsAt->toDateTimeString();
-                $tenant->max_members = $plan->max_users ?? $plan->max_members;
-                $tenant->max_users = $plan->max_users;
-                
-                // Tambahkan data ke kolom JSON 'data' jika diperlukan oleh sistem Tenancy
-                $tenant->setInternal('plan_id', $plan->id);
-                $tenant->setInternal('plan_slug', $plan->slug);
-                
-                $tenant->save();
+        if (!$plan) return;
+
+        // Hitung tanggal kadaluarsa baru (perpanjangan)
+        $currentEndsAt = $tenant->subscription_ends_at
+            ? \Carbon\Carbon::parse($tenant->subscription_ends_at)
+            : now();
+        $baseDate  = $currentEndsAt->isFuture() ? $currentEndsAt : now();
+        $newEndsAt = $baseDate->addDays((int) $plan->duration_in_days);
+
+        // Update kolom tenant yang ada di tabel
+        $tenant->plan_id              = $plan->id;
+        $tenant->plan_slug            = $plan->slug ?? null;
+        $tenant->subscription_ends_at = $newEndsAt->toDateTimeString();
+        $tenant->max_members          = $plan->max_users ?? 0;
+        $tenant->max_users            = $plan->max_users ?? 0;
+        $tenant->trial_ends_at        = null; // Hapus trial saat berlangganan
+
+        // Simpan ke kolom `data` JSON (Stancl Tenancy internal) jika method tersedia
+        if (method_exists($tenant, 'setInternal')) {
+            try {
+                $tenant->setInternal('plan_id',   $plan->id);
+                $tenant->setInternal('plan_slug',  $plan->slug ?? '');
+            } catch (\Throwable $e) {
+                // Abaikan jika setInternal tidak tersedia di konteks ini
+                \Illuminate\Support\Facades\Log::warning('syncTenantSubscription: setInternal failed - ' . $e->getMessage());
             }
         }
+
+        $tenant->save();
     }
 }
